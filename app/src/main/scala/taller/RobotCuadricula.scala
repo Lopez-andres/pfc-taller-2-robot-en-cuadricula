@@ -17,7 +17,16 @@ class RobotCuadricula {
   // Punto 1 -------------------------------------------------------------------
 
   /** La dirección que queda tras girar noventa grados hacia el sentido dado. */
-  def girar(d: Direccion, s: Sentido): Direccion = ???
+  def girar(d: Direccion, s: Sentido): Direccion = (d, s) match {
+    case (Norte, Derecha) => Este
+    case (Norte, Izquierda) => Oeste
+    case (Sur, Derecha) => Oeste
+    case (Sur, Izquierda) => Este
+    case (Este, Derecha) => Sur
+    case (Este, Izquierda) => Norte
+    case (Oeste, Derecha) => Norte
+    case (Oeste, Izquierda) => Sur
+  }
 
   // Punto 2 -------------------------------------------------------------------
 
@@ -27,10 +36,29 @@ class RobotCuadricula {
   // Punto 3 -------------------------------------------------------------------
 
   /** Cuántos Avanzar y Girar llega a ejecutar la orden, contando repeticiones. */
-  def cuantasBasicas(o: Orden): Int = ???
+  def cuantasBasicas(o: Orden): Int = o match {
+      case Avanzar(_) => 1
+      case Girar(_) => 1
+      case Repetir(veces, orden) => if (veces <= 0) 0 else veces * cuantasBasicas(orden)
+      case Secuencia(ordenes) => ordenes match {
+        case Nil => 0
+        case x :: xs => cuantasBasicas(x) + cuantasBasicas(Secuencia(xs))
+      }
+  }
 
   /** Niveles de anidamiento: una básica tiene 1, una compuesta uno más que la más honda. */
-  def profundidad(o: Orden): Int = ???
+  def profundidad(o: Orden): Int = o match {
+    case Avanzar(_) => 1
+    case Girar(_) => 1
+    case Repetir(veces, orden) => 1 + profundidad(orden)
+    case Secuencia(ordenes) => {
+      def maximo(l: List[Orden]): Int = l match {
+        case Nil => 0
+        case x :: xs => math.max(profundidad(x), maximo(xs))
+      }
+      1 + maximo(ordenes)
+    }
+  }
 
   // Punto 4 -------------------------------------------------------------------
 
