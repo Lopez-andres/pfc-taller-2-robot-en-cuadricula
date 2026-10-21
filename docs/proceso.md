@@ -31,7 +31,7 @@ Para abreviar, en las tablas `D` es `Derecha` e `I` es `Izquierda`.
   }
 ```
 
-`girar` recibe una direccion `d` y un sentido `s` y devuelve la direccion en la que 
+`girar` recibe una dirección `d` y un sentido `s` y devuelve la dirección en la que 
 queda mirando el robot después de girar 90 grados. No recibe una posición y no mueve
 al robot: solo cambia hacia dónde mira. 
 
@@ -75,14 +75,14 @@ Por eso el compilador conoce todas las alternativas y avisa si falta alguna de l
 | `girar(Oeste, D)`   | `(0, 0, Oeste)` | `(0, 0, Norte)` |
 | `girar(Sur, I)`   | `(0, 0, Sur)`   | `(0, 0, Este)`  |
 
-En los cuatro casos `x` e `y` no cambian. solo cambia la dirección.
+En los cuatro casos `x` e `y` no cambian; solo cambia la dirección.
 
 ## Ejemplo de uso
 
-```Scala 
+```Scala
 val robot = new RobotCuadricula
 println(robot.girar(Oeste, Derecha))  // El resultado será: Norte
-````
+```
 
 ## Ejemplos del enunciado
 
@@ -94,7 +94,7 @@ println(robot.girar(Oeste, Derecha))  // El resultado será: Norte
 | `girar(Sur, I)` | `Este`  |
 
 ## Conclusión
-`girar` devuelve la dirección que queda tras un giro de 90 grados. se hace uso de `match` sobre 
+`girar` devuelve la dirección que queda tras un giro de 90 grados. Se hace uso de `match` sobre 
 la pareja `(d,s)`, con un `case` por cada una de las 8 combinaciones.
 
 # Punto 3. `cuantasBasicas` y `profundidad`
@@ -210,7 +210,7 @@ Repetir: 1 + 2 = 3
 
 ### Traza de posiciones del robot
 
-Estas funciones no ejecutan la orden, Para comprobarlas se ejecuta `cuadrado` a mano desde `(0, 0, Norte)` y 
+Estas funciones no ejecutan la orden. Para comprobarlas se ejecuta `cuadrado` a mano desde `(0, 0, Norte)` y 
 se cuentan las órdenes básicas que se ejecutan. 
 
 | Paso | Orden básica     | Estado          | 

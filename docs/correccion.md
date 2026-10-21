@@ -1,279 +1,232 @@
-# Ejemplo de informe de corrección
 
-Fundamentos de Programación Funcional y Concurrente.
-Documento realizado por el docente Juan Francisco Díaz.
 
-## 1. Argumentar la corrección de programas recursivos
+## Punto 1. `girar`
 
-Sea $f : A \to B$ una función, y $A$ un conjunto definido recursivamente
-(recordar la definición de Matemáticas Discretas I), como por ejemplo los
-naturales o las listas.
+### Especificación
 
-Sea $P_f$ un programa recursivo (lineal o en árbol) desarrollado en Scala (o en
-cualquier lenguaje de programación) hecho para calcular $f$:
+Las direcciones se numeran en sentido horario con la función $\text{pos}$:
 
-```scala
-def Pf(a: A): B = { // Pf recibe a de tipo A, y devuelve f(a) de tipo B
-  ...
-}
-```
+$$\text{pos}(\text{Norte}) = 0 \qquad \text{pos}(\text{Este}) = 1 \qquad \text{pos}(\text{Sur}) = 2 \qquad \text{pos}(\text{Oeste}) = 3$$
 
-¿Cómo argumentar que $P_f(a)$ siempre devuelve $f(a)$ como respuesta? Es decir,
-¿cómo argumentar que $P_f$ es correcto con respecto a su especificación?
+Cada sentido de giro suma un desplazamiento $\delta$ a la posición, módulo 4. Girar a la izquierda equivale a retroceder una posición, es decir, a sumar 3:
 
-La respuesta es sencilla: demostrando el siguiente teorema.
+$$\delta(\text{Derecha}) = 1 \qquad \delta(\text{Izquierda}) = 3$$
 
-```math
-\forall a \in A : P_f(a) == f(a)
-```
+Sea $g$ la función que devuelve la dirección resultante de girar:
 
-Cuando uno tiene que demostrar que algo se cumple para todos los elementos de
-un conjunto definido recursivamente, es natural usar inducción estructural. En
-términos prácticos, esto significa demostrar que:
+$$g(d, s) = \text{pos}^{-1}\big((\text{pos}(d) + \delta(s)) \bmod 4\big)$$
 
-- Para cada valor básico $a$ de $A$, se tiene que $P_f(a) == f(a)$.
-- Para cada valor $a \in A$ construido recursivamente a partir de otro(s)
-  valor(es) $a' \in A$, se tiene que
-  $P_f(a') == f(a') \rightarrow P_f(a) == f(a)$. (Esta es la hipótesis de
-  inducción).
+Esta especificación coincide con los ejemplos del enunciado: $g(\text{Norte}, \text{Derecha}) = \text{Este}$ y $g(\text{Oeste},\text{Derecha}) = \text{Norte}$.
 
-### Ejemplo: factorial recursivo
+Sea $P_{\text{girar}}$ el programa en Scala:
 
-Sea $f : \mathbb{N} \to \mathbb{N}$ la función que calcula el factorial de un
-número natural, es decir, $f(n) = n!$. Y sea $P_f$ el siguiente programa en
-Scala:
-
-```scala
-def Pf(n: Int): Int = { // Pf recibe n de tipo Int, y devuelve n! de tipo Int
-  if (n == 0) 1 else n * Pf(n - 1)
-}
-```
-
-Vamos a demostrar que $\forall n \in \mathbb{N} : P_f(n) == n!$
-
-**Caso base:** $n = 0$
-
-```math
-P_f(0) \rightarrow \text{if } (0 == 0)\ 1 \text{ else } 0 \ast P_f(-1) \rightarrow 1
-```
-
-Por otro lado, $f(0) = 0! = 1$. Entonces $P_f(0) == f(0)$.
-
-**Caso de inducción:** $n = k + 1$, $k \geq 0$. Hay que demostrar:
-$P_f(k) == f(k) \rightarrow P_f(k + 1) == f(k + 1)$
-
-```math
-P_f(k+1) \rightarrow \text{if } (k+1 == 0)\ 1 \text{ else } (k+1) \ast P_f(k) \rightarrow (k+1) \ast P_f(k)
-```
-
-Usando la hipótesis de inducción (HI):
-
-```math
-\rightarrow (k+1) \ast k! = (k+1)!
-```
-
-Por lo tanto, $P_f(k + 1) == f(k + 1)$.
-
-Concluimos por inducción que $\forall n \in \mathbb{N} : P_f(n) == n!$
-
-### Ejemplo: el máximo de una lista
-
-Sea $f : \text{List}[\mathbb{N}] \to \mathbb{N}$ la función que calcula el
-máximo de una lista de enteros positivos, no vacía. Y sea $P_f$ el siguiente
-programa en Scala:
-
-```scala
-def maxLin(l: List[Int]): Int = {
-  if (l.tail.isEmpty) l.head
-  else math.max(maxLin(l.tail), l.head)
-}
-```
-
-Demostraremos que:
-
-```math
-\forall n \in \mathbb{N} \setminus \{0\} : P_f(\text{List}(a_1, a_2, \ldots, a_n)) == f(\text{List}(a_1, a_2, \ldots, a_n))
-```
-
-**Caso base:** $n = 1$
-
-```math
-P_f(\text{List}(a_1)) \rightarrow \text{if } \text{List}(a_1).\text{tail.isEmpty then } \text{List}(a_1).\text{head else } \ldots \rightarrow \text{List}(a_1).\text{head} \rightarrow a_1
-```
-
-Por otro lado, $f(\text{List}(a_1)) = a_1$. Entonces
-$P_f(\text{List}(a_1)) == f(\text{List}(a_1))$.
-
-**Caso de inducción:** $n = k + 1$, $k \geq 1$. Se debe demostrar:
-
-```math
-P_f(\text{List}(b_1, b_2, \ldots, b_k)) == f(\text{List}(b_1, b_2, \ldots, b_k)) \rightarrow P_f(\text{List}(a_1, a_2, \ldots, a_{k+1})) == f(\text{List}(a_1, a_2, \ldots, a_{k+1}))
-```
-
-Empecemos por calcular qué devuelve $P_f$ usando el modelo de sustitución:
-
-```math
-P_f(L) \rightarrow \text{if } L.\text{tail.isEmpty then } L.\text{head else math.max}(P_f(L.\text{tail}), L.\text{head})
-```
-
-```math
-\rightarrow \text{math.max}(P_f(\text{List}(a_2, \ldots, a_{k+1})), a_1)
-```
-
-Sea $b = P_f(\text{List}(a_2, \ldots, a_{k+1}))$; por la hipótesis de
-inducción, $b = f(\text{List}(a_2, \ldots, a_{k+1}))$. Hay dos posibilidades:
-
-- Si $\text{math.max}(b, a_1) = b$, entonces $b \geq a_1$ y
- $b == f(\text{List}(a_1, a_2, \ldots, a_{k+1}))$.
-- Si $\text{math.max}(b, a_1) = a_1$, entonces $a_1 \geq b$ y
- $a_1 == f(\text{List}(a_1, a_2, \ldots, a_{k+1}))$.
-
-Por lo tanto, $P_f(L) == f(L)$.
-
-Concluimos por inducción que:
-
-```math
-\forall n \in \mathbb{N} \setminus \{0\} : P_f(\text{List}(a_1, a_2, \ldots, a_n)) == f(\text{List}(a_1, a_2, \ldots, a_n))
-```
-
-## 2. Argumentar la corrección de programas iterativos
-
-Para argumentar la corrección de programas iterativos, se debe formalizar cómo
-es la iteración. Esto implica definir:
-
-- Cómo se representa un estado de la iteración, $s$.
-- Cuál es el estado inicial, $s_0$.
-- Cuál es el estado final (o cómo se reconoce que un estado es final): $s_f$.
-- Qué condición (o predicado) cumple todo estado: $\text{Inv}(s)$ (invariante
-  de la iteración).
-- El mecanismo para pasar de un estado al siguiente: $\text{transformar}(s)$.
-  Si $s_i$ es el estado $i$, entonces $\text{transformar}(s_i) = s_{i+1}$.
-
-Un programa iterativo tiene la siguiente forma:
-
-```scala
-def Pf(a: A): B = { // Pf recibe a de tipo A, y devuelve f(a) de tipo B
-  def Pf_iter(s: Estado): B =
-    if (esFinal(s)) respuesta(s) else Pf_iter(transformar(s))
-  Pf_iter(s0)
-}
-```
-
-Demostración de corrección:
-
-- $\text{Inv}(s_0)$: el estado inicial cumple la condición invariante.
-- Si $(s_i \neq s_f \land \text{Inv}(s_i)) \rightarrow \text{Inv}(\text{transformar}(s_i))$:
-  el nuevo estado cumple la condición invariante si el estado anterior la
-  cumplía.
-- De lo anterior se concluye $\text{Inv}(s_f)$, es decir, el estado final
-  cumple la condición invariante. Luego,
-  $\text{Inv}(s_f) \rightarrow \text{respuesta}(s_f) == f(a)$.
-- Finalmente, demostrar que siempre se llega al estado final $s_f$. Esto
-  implica que
-  $P_f(a) == \text{iter}(s_0) == \text{respuesta}(s_f) == f(a)$.
-
-### Ejemplo: factorial iterativo
-
-Considere el siguiente programa iterativo en Scala para calcular la función
-factorial:
-
-```scala
-def Pf(n: Int): Int = { // Pf recibe n de tipo Int, y devuelve n! de tipo Int
-  def Pf_iter(i: Int, n: Int, ac: Int): Int =
-    if (i > n) ac else Pf_iter(i + 1, n, i * ac)
-  Pf_iter(1, n, 1)
-}
-```
-
-Este programa implementa el siguiente proceso iterativo:
-
-- Un estado $s = (i, n, ac)$.
-- El estado inicial es $s_0 = (1, n, 1)$.
-- $(i, n, ac)$ es final si $i > n$, o lo que es lo mismo, si $i = n + 1$.
-- La invariante de ciclo es
-  $\text{Inv}(i, n, ac) \equiv i \leq n + 1 \land ac = (i-1)!$.
-  La invariante de ciclo es una relación que SIEMPRE se cumple en el ciclo.
-- $\text{transformar}((i, n, ac)) = (i+1, n, i \ast ac)$.
-
-Ahora, demostramos los puntos mencionados:
-
-**1.** $\text{Inv}(s_0)$: el estado inicial cumple la condición invariante.
-
-```math
-s_0 = (1, n, 1) \implies 1 \leq n + 1 \land 1 = 0!
-```
-
-**2.** La invariante se mantiene con la transformación de estados,
-$(s_i \neq s_f \land \text{Inv}(s_i)) \rightarrow \text{Inv}(\text{transformar}(s_i))$:
-
-1. Primer cambio, $i = i + 1$, lo que implica $ac = ((i+1) - 1)! = i!$.
-2. Segundo cambio, $ac = i \ast ac$, entonces $ac = (i - 1)! \ast i = i!$.
-3. Como se puede ver en ambos cambios indicados en la transformación, la
-   invariante se mantiene.
-
-**3.** $\text{Inv}(s_f) \rightarrow \text{respuesta}(s_f) == f(a)$
-
-```math
-(n + 1 \leq n + 1) \land ac = ((n+1)-1)! \rightarrow ac == n!
-```
-
-**4.** En cada paso, la componente $i$ del estado incrementa, acercándose a $n+1$.
-Después de $n$ iteraciones, se alcanza $n+1$.
-
-Esto implica que $P_f(n) == \text{iter}(1, n, 1) == n!$
-
-### Ejemplo: el máximo de una lista
-
-Se desea calcular el máximo de una lista de enteros positivos, no vacía. Sea
-$f : \text{List}[\mathbb{N}] \to \mathbb{N}$ la función que calcula ese valor.
-Y sea $P_f$ el siguiente programa en Scala:
-
-```scala
-def maxIt(l: List[Int]): Int = {
-  def maxAux(max: Int, l: List[Int]): Int = {
-    if (l.isEmpty) max
-    else maxAux(math.max(max, l.head), l.tail)
+```Scala
+  def girar(d: Direccion, s: Sentido): Direccion = (d, s) match {
+    case (Norte, Derecha) => Este
+    case (Norte, Izquierda) => Oeste
+    case (Sur, Derecha) => Oeste
+    case (Sur, Izquierda) => Este
+    case (Este, Derecha) => Sur
+    case (Este, Izquierda) => Norte
+    case (Oeste, Derecha) => Norte
+    case (Oeste, Izquierda) => Sur
   }
-  maxAux(l.head, l.tail)
-}
 ```
 
-Este programa implementa el siguiente proceso iterativo:
+Se desea demostrar que:
 
-- Un estado $s = (max, l)$ donde $l = \text{List}(a_i, a_{i+1}, \ldots, a_k)$
-  es una cola de $L$.
-- El estado inicial es
-  $s_0 = (L.\text{head}, L.\text{tail}) = (a_1, \text{List}(a_2, \ldots, a_k))$.
-- $s = (max, l)$ es final si $l$ es vacía.
-- $\text{Inv}(max, l) \equiv l = \text{List}(a_i, a_{i+1}, \ldots, a_k) \land max = f(\text{List}(a_1, a_2, \ldots, a_{i-1}))$.
-- $\text{transformar}((max, l)) = (nmax, l.\text{tail})$ donde $nmax = max$ si
-  $max \geq l.\text{head}$, y $nmax = l.\text{head}$ si no.
+$$\forall d \in \text{Direccion}, \forall s \in \text{Sentido} : P_{\text{girar}}(d,s) = g(d,s)$$
 
-Demostración de los puntos:
+### Método: análisis de casos
 
-**1.** $\text{Inv}(s_0)$: el estado inicial cumple la condición invariante.
+$P_{\text{girar}}$ no es recursiva, así que no hay hipótesis de inducción. Como $\text{Direccion}$ tiene 4 valores y $\text{Sentido}$ tiene 2, el conjunto
+$\text{Direccion} \times \text{Sentido}$ tiene 8 elementos y se pueden revisar todos. 
 
-```math
-s_0 = (a_1, \text{List}(a_2, \ldots, a_k)) \implies a_1 = f(\text{List}(a_1))
+El `match` ejecuta el primer `case` cuyo patrón coincide con la pareja $(d,s)$. Los 8 patrones son distintos entre sí y cubren las 8 parejas, porque `Direccion` y `Sentido` son `sealed trait`.
+Por eso cada pareja activa exactamente un `case`.
+
+### Verificación de las 8 parejas 
+
+| $d$   | $s$       | $\text{pos}(d)$ | $(\text{pos}(d) + \delta(s)) \bmod 4$ | $g(d,s)$ | $P_{\text{girar}}(d,s)$ |
+|-------|-----------|-----------------|---------------------------------------|----------|-------------------------|
+| Norte | Derecha   | 0               | 1                                     | Este     | Este                    |
+| Norte | Izquierda | 0               | 3                                     | Oeste    | Oeste                   |
+| Este  | Derecha   | 1               | 2                                     | Sur      | Sur                     |
+| Este  | Izquierda | 1               | 0                                     | Norte    | Norte                   |
+| Sur   | Derecha   | 2               | 3                                     | Oeste    | Oeste                   |
+| Sur   | Izquierda | 2               | 1                                     | Este     | Este                    |
+| Oeste | Derecha   | 3               | 0                                     | Norte    | Norte                   |
+| Oeste | Izquierda | 3               | 2                                     | Sur      | Sur                     |
+
+En las 8 parejas $P_{\text{girar}}(d,s) = g(d,s)$.
+
+### Propiedades que se siguen de la especificación 
+
+- **Un giro y su contrario se cancelan.** Con $p = \text{pos}(d)$, girar a la derecha y luego a la izquierda da $(p + 1 + 3) \bmod 4 = p$.
+En el otro orden pasa lo mismo. 
+- **Cuatro giros al mismo lado vuelven a la dirección inicial.** Como $4\, \delta(s)$ es múltiplo de 4, $(p + 4\,\delta(s)) \bmod 4 = p$.
+
+### Conclusión 
+
+Las 8 parejas de $\text{Direccion} \times \text{Sentido}$ cumplen $P_{\text{girar}}(d,s) = g(d,s)$. Por lo tanto, `girar` es correcta respecto a su especificación. 
+
+## Punto 3. `cuantasBasicas` y `profundidad`
+
+### Especificación
+
+$\text{Orden}$ se define recursivamente:
+
+- $\text{Avanzar}(n)$ y $\text{Girar}(s)$ son órdenes (casos básicos).
+- Si $o$ es una orden y $v \in \mathbb{Z}$, entonces $\text{Repetir}(v,o)$ es una orden.
+- Si $o_1, \ldots, o_n$ son órdenes con $n \geq 0$, entonces $\text{Secuencia}([o_1,\ldots,o_n])$ es una orden. 
+
+Sean $B, D: \text{Orden} \to \mathbb{N}$ las funciones que definen qué debe devolver cada programa:
+
+$$B(\text{Avanzar}(n)) = B(\text{Girar}(s)) = 1 \qquad B(\text{Repetir}(v,o)) = \max(v,0)\cdot B(o)$$
+
+$$B(\text{Secuencia}([o_1,\ldots,o_n])) = \sum_{i=1}^n B(o_i)$$ 
+
+$$D(\text{Avanzar}(n)) = D(\text{Girar}(s)) = 1 \qquad D(\text{Repetir}(v,o)) = 1 + D(o)$$
+
+$$D(\text{Secuencia}([o_1,\ldots,o_n])) = 1 + \max\big(\{0\} \cup \{D(o_i)\}\big)$$
+
+La suma vacía vale 0. Por eso $B(\text{Secuencia}([\,])) = 0$ y $D(\text{Secuencia}([\,])) = 1$.
+
+Sean $P_B$ y $P_D$ los programas en Scala `cuantasBasicas` y `profundidad`:
+
+```Scala
+  def cuantasBasicas(o: Orden): Int = o match {
+      case Avanzar(_) => 1
+      case Girar(_) => 1
+      case Repetir(veces, orden) => if (veces <= 0) 0 else veces * cuantasBasicas(orden)
+      case Secuencia(ordenes) => ordenes match {
+        case Nil => 0
+        case x :: xs => cuantasBasicas(x) + cuantasBasicas(Secuencia(xs))
+      }
+  }
+  
+  def profundidad(o: Orden): Int = o match {
+    case Avanzar(_) => 1
+    case Girar(_) => 1
+    case Repetir(veces, orden) => 1 + profundidad(orden)
+    case Secuencia(ordenes) => {
+      def maximo(l: List[Orden]): Int = l match {
+        case Nil => 0
+        case x :: xs => math.max(profundidad(x), maximo(xs))
+      }
+      1 + maximo(ordenes)
+    }
+  }
 ```
 
-**2.** $(s_i \neq s_f \land \text{Inv}(s_i)) \rightarrow \text{Inv}(\text{transformar}(s_i))$
+Se desea demostrar que, mientras los resultados quepan en un `Int`:
 
-```math
-\neg\, l.\text{isEmpty} \land l = \text{List}(a_i, a_{i+1}, \ldots, a_k) \land max = f(\text{List}(a_1, a_2, \ldots, a_{i-1}))
-```
+$$\forall o \in \text{Orden} : P_B(o) = B(o) \;\land\; P_D(o) = D(o)$$
 
-```math
-\rightarrow l.\text{tail} = \text{List}(a_{i+1}, \ldots, a_k) \land nmax = f(\text{List}(a_1, \ldots, a_i))
-```
+### Método
 
-**3.** $\text{Inv}(s_f) \rightarrow \text{respuesta}(s_f) == f(a)$
+La demostración usa inducción estructural sobre $\text{Orden}$. En el caso $\text{Secuencia}([o_1,\ldots,o_n])$, la hipótesis de inducción 
+vale para cada $o_i$, porque cada una es parte de la secuencia. 
 
-```math
-\text{Inv}((max, \text{List}())) \rightarrow max = f(\text{List}(a_1, \ldots, a_k))
-```
+Los programas recorren la lista interna con funciones que no son parte de la orden: `cuantasBasicas` llama a $\text{Secuencia}(xs)$, que no es una parte de $\text{Secuencia}(x::xs)$, y `profundidad`
+usa `maximo`. Por eso antes se demuestran dos lemas sobre listas, por inducción sobre su longitud $n$.
 
-**4.** En cada paso, la lista $l$ se reduce, acercándose a ser vacía. Después de
-$k$ iteraciones, $l = \text{List}()$.
+### Lema 1 (lista en `cuantasBasicas`)
 
-Esto implica que $P_f(L) == \text{maxAux}(L.\text{head}, L.\text{tail}) == f(L)$
+Si $P_B(o_i) = B(o_i)$ para todo $i$, entonces:
+
+$$P_B(\text{Secuencia}([o_1, \ldots,o_n])) = \sum_{i=1}^{n} B(o_i)$$
+
+**Caso base $n=0$.** El programa ejecuta el caso `Nil`:
+
+$$P_B(\text{Secuencia}([\,])) \rightarrow 0$$
+
+que es la suma vacía. 
+
+**Caso inductivo $n=k+1$.** Sea la lista $x :: xs$, donde $xs$ tiene $k$ órdenes:
+
+$$P_B(\text{Secuencia}(x::xs)) \rightarrow P_B(x) + P_B(\text{Secuencia}(xs))$$
+
+Por la hipótesis del lema, $P_B(x) = B(x)$. Las órdenes de $xs$ también la cumplen, así que por la hipótesis de inducción
+$P_B(\text{Secuencia}(xs))$ es la suma de $B$ sobre $xs$. Por lo tanto, el resultado es $B(x)$ más esa suma, es decir, la suma de $B$ sobre toda la lista. 
+
+### Lema 2 (`maximo`)
+
+Si $P_D(o_i) = D(o_i)$ para todo $i$, entonces:
+
+$$\text{maximo}([o_1,\ldots,o_n]) = \max\big(\{0\} \cup \{D(o_i)\}\big)$$
+
+**Caso base $n=0$.** $\text{maximo}([\,]) \rightarrow 0 = \max(\{0\})$.
+
+**Caso inductivo $n=k+1$.** Sea la lista $x :: xs$:
+
+$$\text{maximo}(x::xs) \rightarrow \max\big(P_D(x),\ \text{maximo}(xs)\big)$$
+
+Por la hipótesis del lema, $P_D(x) = D(x)$. Por la hipótesis de inducción, $\text{maximo}(xs) = \max(\{0\} \cup \{D(o_i) : o_i \in xs\})$. El máximo de $D(x)$ con ese 
+valor es el máximo de $\{0\}$ y de los $D$ de toda la lista. 
+
+### Teorema para `cuantasBasicas`
+
+**Casos base.** $P_B(\text{Avanzar}(n)) \rightarrow 1 = B(\text{Avanzar}(n))$. Lo mismo ocurre con $\text{Girar}(s)$.
+
+**Caso $\text{Repetir}(v,o)$.** La hipótesis de inducción es $P_B(o) = B(o)$.
+
+- Si $v \leq 0$, el programa devuelve $0 = \max(v,0)\cdot B(o)$.
+- Si $v > 0$, el programa devuelve $v \cdot P_B(o) = v \cdot B(o) = \max(v,0)\cdot B(o)$.
+
+**Caso $\text{Secuencia}([o_1,\ldots,o_n])$.** Cada $o_i$ cumple $P_B(o_i) = B(o_i)$ por la hipótesis de inducción. Por el Lema 1:
+
+$$P_B(\text{Secuencia}([o_1,\ldots,o_n])) = \sum_{i=1}^{n} B(o_i) = B(\text{Secuencia}([o_1,\ldots,o_n]))$$
+
+### Teorema para `profundidad`
+
+**Casos base.** $P_D(\text{Avanzar}(n)) \rightarrow 1 = D(\text{Avanzar}(n))$. Lo mismo ocurre con $\text{Girar}(s)$.
+
+**Caso $\text{Repetir}(v,o)$.** El programa devuelve $1 + P_D(o)$. El valor $v$ no interviene. Por la hipótesis de inducción:
+
+$$1 + P_D(o) = 1 + D(o) = D(\text{Repetir}(v,o))$$
+
+**Caso $\text{Secuencia}([o_1,\ldots,o_n])$.** El programa devuelve $1 + \text{maximo}([o_1,\ldots,o_n])$. Cada $o_i$ cumple $P_D(o_i) = D(o_i)$ por la hipótesis de inducción. Por el lema 2:
+
+$$1 + \text{maximo}([o_1,\ldots,o_n]) = 1 + \max\big(\{0\} \cup \{D(o_i)\}\big) = D(\text{Secuencia}([o_1,\ldots,o_n]))$$
+
+### Terminación
+
+Cada llamada recursiva se hace sobre una parte de la orden o sobre una lista con un elemento menos. Como una orden tiene un número finito de 
+partes y toda lista es finita, ambos programas terminan.
+
+### Casos límite
+
+- $B(\text{Secuencia}([\,])) = 0$ y $D(\text{Secuencia}([\,])) = 1$.
+- $B(\text{Repetir}(v,o)) = 0$ para $v \leq 0$.
+- $D$ no depende de $v$.
+
+### Encadenamiento de los llamados
+Sea $\text{cuadrado} = \text{Repetir}(4, \text{Secuencia}([\text{Avanzar}(1), \text{Girar}(\text{Derecha})]))$.
+
+$$
+\begin{aligned}
+P_B(\text{cuadrado}) &\rightarrow 4 \cdot P_B(\text{Secuencia}([\text{Avanzar}(1), \text{Girar}(\text{Derecha})])) \\
+&\rightarrow 4 \cdot \big(P_B(\text{Avanzar}(1)) + P_B(\text{Secuencia}([\text{Girar}(\text{Derecha})]))\big) \\
+&\rightarrow 4 \cdot \big(1 + (P_B(\text{Girar}(\text{Derecha})) + P_B(\text{Secuencia}([\,])))\big) \\
+&\rightarrow 4 \cdot (1 + (1 + 0)) \rightarrow 8
+\end{aligned}
+$$
+
+$$
+\begin{aligned}
+P_D(\text{cuadrado}) &\rightarrow 1 + P_D(\text{Secuencia}([\text{Avanzar}(1), \text{Girar}(\text{Derecha})])) \\
+&\rightarrow 1 + \big(1 + \text{maximo}([\text{Avanzar}(1), \text{Girar}(\text{Derecha})])\big) \\
+&\rightarrow 1 + \big(1 + \max(1, \max(1, 0))\big) \rightarrow 3
+\end{aligned}
+$$
+
+Ambos valores coinciden con $B(\text{cuadrado}) = 4 \cdot (1+1) = 8$ y $D(\text{cuadrado}) = 1 + (1 + \max(1,1)) = 3$.
+
+### Conclusión 
+
+Se demostró, por inducción estructural sobre $\text{Orden}$ y con los Lemas 1 y 2 para las listas de $\text{Secuencia}$, que:
+
+$$\forall o \in \text{Orden} : P_B(o) = B(o) \;\land\; P_D(o) = D(o)$$
+
+Por lo tanto, `cuantasBasicas` y `profundidad` son correctas respecto a su especificación, siempre que el resultado de `cuantasBasicas` esté dentro del rango de un `Int`.
