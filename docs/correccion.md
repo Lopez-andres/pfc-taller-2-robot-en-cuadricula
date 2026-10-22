@@ -749,87 +749,21 @@ $$\forall o \in \text{Orden} : P_B(o) = B(o) \;\land\; P_D(o) = D(o)$$
 
 Por lo tanto, `cuantasBasicas` y `profundidad` son correctas respecto a su especificación, siempre que el resultado de `cuantasBasicas` esté dentro del rango de un `Int`.
 
-## Punto 4. `aplicarA`  y `transformar`
-
-### Función `aplicarA`
-
-#### Especificación
-
-Sea $f_{\mathrm{apl}} : \text{List}[\text{Estado}] \times \text{Orden} \to \text{List}[\text{Estado}]$ la función que ejecuta
-la misma orden sobre cada estado de la lista: para $L = \text{List}(e_1, \ldots, e_n)$,
-
-$$
-  f_{\mathrm{apl}}(L, o) = \text{List}(\texttt{ejecutar}(e_1, o),\ \ldots, \ \texttt{ejecutar}(e_n, o))
-$$
-
-Y sea $P_{\mathrm{apl}}$ el siguiente programa en Scala:
-
-#### Programa
-
-```scala
-def aplicarA(estados: List[Estado], o: Orden): List[Estado] =
-    estados match {
-      case Nil =>
-          Nil
-      case cabeza :: cola =>
-          ejecutar(cabeza, o) :: aplicarA(cola, o)
-}
-```
-#### Demostración
-
-vamos a demostrar que:
-
-$$
-\forall n \in \mathbb{N},\ \forall o \in \text{Orden},\ \forall e_1, \ldots, e_n \in \text{Estado} : P_{\mathrm{apl}}(\text{List}
-(e_1, \ldots, e_n),\ o) == f_{\mathrm{apl}}(\text{List}(e_1, \ldots, e_n),\ o)
-$$
-
-La inducción es sobre $n$, la cantidad de estados. La orden $o$ es la misma en todas las llamadas recursivas, así que la 
-HI vale para ella.
-
-**Caso base.** Si `estados= Nil`, el programa devuelve `Nil`, la lista vacía no contiene estados que deban procesarse, por lo que 
-el resultado coincide con la especificación.
-
-Por otro lado, $f_{\mathrm{apl}}(\text{Nil}, o) =\text{List}() = \text{Nil}$. Entonces $P_{\mathrm{apl}}(\text{Nil}, o) ==
-f_{\mathrm{apl}}(\text{Nil}, o)$.
-
-**Caso inducción.** $n =k + 1$, $k \geq 0$, Con $\texttt{cabeza} = e_1$ y $\texttt{cola} = \text{List}(e_2, \ldots, e_{k+1})$,
-por el modelo de sustitución.
-
-$$
-P_{\mathrm{apl}}(\text{List}(e_1, \ldots, e_{k+1}), o)
-\rightarrow \texttt{ejecutar}(e_1, o) :: P_{\mathrm{apl}}(\text{List}(e_2, \ldots, e_{k+1}), o)
-$$
-
-Usando la HI, que vale porque la cola tiene $k$ estados:
- 
-$$
-\rightarrow \texttt{ejecutar}(e_1, o) :: \text{List}(\texttt{ejecutar}(e_2, o), \ldots, \texttt{ejecutar}
-(e_{k+1}, o)) = f_{\mathrm{apl}}(\text{List}(e_1, \ldots, e_{k+1}), o)
-$$
-
-Concluimos por inducción que `aplicarA` cumple la especificación.
 
 
+## Punto 4 Rutinas con funciones de alto orden
 
-### Función `transformar`
+### Especificación
+En este punto se desarrolló 4 funciones; $componer$, $rutina$, $aplicarA$ y $transformar$.
+Cada una te permite realizar una tarea diferente con las órdenes del robot
+- $componer$: Une 2 órdenes en una secuencia, respetando el orden en que se reciben
+- $rutina$: Crea una orden que permite avanzar, girar y repetir estas acciones en una cantidad determinada de veces
+- $aplicarA$: Ejecuta una misma orden sobre cada uno de los estados de una lista y devuelve los resultados
+- $transformar$: Cambia las órdenes básicas mediante una función, manteniendo la estructura de las órdenes compuestas
 
-#### Especificación
+El objetivo es demostrar que cada función realiza correctamente lo que se le pide, y que los resultados obtenidos
+correspondan con los esperados
 
-Sea $T_g : \text{Orden} \to \text{Orden}$ la función que reemplaza cada orden por el resultado de aplicar $g$ (el parámetro `f`
-del código) y conserva la estructura de las compuestas:
-
-$$
-\begin{aligned}
-T_g(\texttt{Avanzar}(n)) &= g(\texttt{Avanzar}(n)) \\
-T_g(\texttt{Girar}(s)) &= g(\texttt{Girar}(s)) \\
-T_g(\texttt{Repetir}(k, o)) &= \texttt{Repetir}(k, \ T_g(o)) \\
-T_g(\texttt{Secuencia}(\text{List}(o_1, \ldots, o_n))) &= \texttt{Secuencia}(\text{List}(T_g(o_1), \ldots, T_g(o_n))).
-\end{aligned}
-$$
-
-La función no ejecuta las órdenes; construye otra orden con la misma estructura de repeticiones y secuencias, transformando cada
-orden básica mediante $g$.
 
 #### Programa
 
@@ -859,110 +793,6 @@ orden básica mediante $g$.
     
 ```
 
-#### Demostración
-
-Sea $P_{\mathrm{tra}}$ el programa `transformar`.
-
-Vamos a demostrar que:
-
-$$
-\forall o \in \text{Orden}, \ \forall g : \text{Orden} \to \text {Orden} : P_{\mathrm{tra}}(o, g) == T_g(o)
-$$
-
-El tipo $\text{Orden}$, se define recursivamente, así que la demostración es por **inducción estructural** sobre $o$: las 
-órdenes básicas son $\texttt{Avanzar}(n)$ y $\texttt{Girar}(s)$; las compuestas son $\texttt{Repetir}(k, o')$ y $\texttt{Secuencia}(\text{List}(o_1, \ldots, o_n))$,
-con $o', o_1, \ldots, o_n \in \text{Orden}$ (la lista puede estar vacía).
-
-`Secuencia` no llama a `transformar` sobre la lista, sino a la auxiliar `transformarLista`. Por eso se necesita este lema.
-
-**Lema auxiliar (`transformarLista).`**
-Sea $L= \text{List}(o_1, \ldots, o_n)$ tal que $P_{\mathrm{tra}}(o_i, g) == T_g(o_i)$ para todo $i$. 
-
-Entonces:
-
-$$ 
-\texttt{transformarLista}(L) == \text{List}(T_g(o_1),\ \ldots,\ T_g(o_n))
-$$
-
-Se prueba con inducción sobre $n$.
-
-*Caso base:* $n = 0$, es decir, $L= \text{Nil}$, `transformarLista(Nil)` devuelve $\text{Nil}$, que es la lista $\text{List}()$
-de cero elementos. Se cumple el lema.
-
-*Caso de inducción:* $n = k +1$, $k \geq 0$. Con $\texttt{cabeza} = o_1$ y $\texttt{cola} = \text{List}(o_2, \ldots, o_{k+1})$:
-
-$$ 
-\texttt{transformarLista}(L) \rightarrow P_{\mathrm{tra}}(o_1, g) :: \texttt{transformarLista}(\text{List}(o_2, \ldots, o_{k+1}))
-$$
-
-Por la suposición del lema y la Hipótesis, esto es $T_g(o_1) :: \text{List}(T_g(o_2), \ldots, T_g(o_{k+1}))$, que es el lado derecho.
-Concluimos por inducción que el lema vale.
-
-**Caso base:**  `Avanzar(n)` y `Girar(s)`: el programa devuelve `f(o)`, que es $T_g(o)$.
-
-**Caso `Repetir(k, o')`:** por la Hipótesis, $P_{\mathrm{tra}}(o', g) == T_g(o')$, así que $\texttt{Repetir}(k, P_{\mathrm{trat}}
-(o', g)) = \texttt{Repetir}(k, T_g(o')) = T_g(\texttt{Repetir}(k, o'))$.
-
-**Caso `Secuencia`:** por la HI cada $o_i$ cumple la suposición del lema, así que `transformarLista` da $\text{List}(T_g(o_1), 
-\ldots, T_g(o_n))$ y el resultado es $T_g(o)$.
-
-Concluimos por inducción estructural que $P_{\mathrm{tra}}(o, g) == T_g(o)$.
-
-## Punto 4 Rutinas con funciones de alto orden
-
-### Especificación
-En este punto se desarrolló 4 funciones; $componer$, $rutina$, $aplicarA$ y $transformar$.
-Cada una te permite realizar una tarea diferente con las órdenes del robot
-- $componer$: Une 2 órdenes en una secuencia, respetando el orden en que se reciben
-- $rutina$: Crea una orden que permite avanzar, girar y repetir estas acciones en una cantidad determinada de veces
-- $aplicarA$: Ejecuta una misma orden sobre cada uno de los estados de una lista y devuelve los resultados
-- $transformar$: Cambia las órdenes básicas mediante una función, manteniendo la estructura de las órdenes compuestas
-
-El objetivo es demostrar que cada función realiza correctamente lo que se le pide, y que los resultados obtenidos
-correspondan con los esperados
-
-### Algoritmo
-
-Las funciones que se analizarán son:
-
-```Scala
-def componer(o1: Orden, o2: Orden): Orden =
-  Secuencia(List(o1, o2))
-
-def rutina(pasos: Int)(giro: Sentido)(veces: Int): Orden =
-  Repetir(veces, componer(Avanzar(pasos), Girar(giro)))
-
-def aplicarA(estados: List[Estado], o: Orden): List[Estado] =
-  estados match {
-    case Nil =>
-      Nil
-    case cabeza :: cola =>
-      ejecutar(cabeza, o) :: aplicarA(cola, o)
-  }
-
-def transformar(o: Orden, f: Orden => Orden): Orden =
-  o match {
-    case Avanzar(_) =>
-      f(o)
-
-    case Girar(_) =>
-      f(o)
-
-    case Repetir(veces, orden) =>
-      Repetir(veces, transformar(orden, f))
-
-    case Secuencia(ordenes) =>
-      def transformarLista(pendientes: List[Orden]): List[Orden] =
-        pendientes match {
-          case Nil =>
-            Nil
-          case cabeza :: cola =>
-            transformar(cabeza, f) :: transformarLista(cola)
-        }
-
-      Secuencia(transformarLista(ordenes))
-  }
-```
 ### Método de demostración
 
 Para justificar la corrección de estas funciones se utilizaron 2 métodos:
@@ -1105,22 +935,134 @@ ejecutar(inicial, rutina(1)(Derecha)(4))
 El robot realiza 4 avances y 4 giros
 
 
-### Caso 3: Función aplicarA
+### Función `aplicarA`
+
+#### Especificación
+
+Sea $f_{\mathrm{apl}} : \text{List}[\text{Estado}] \times \text{Orden} \to \text{List}[\text{Estado}]$ la función que ejecuta
+la misma orden sobre cada estado de la lista: para $L = \text{List}(e_1, \ldots, e_n)$,
+
+$$
+  f_{\mathrm{apl}}(L, o) = \text{List}(\texttt{ejecutar}(e_1, o),\ \ldots, \ \texttt{ejecutar}(e_n, o))
+$$
+
+Y sea $P_{\mathrm{apl}}$ el siguiente programa en Scala:
+
+#### Programa
+
+```scala
+def aplicarA(estados: List[Estado], o: Orden): List[Estado] =
+    estados match {
+      case Nil =>
+          Nil
+      case cabeza :: cola =>
+          ejecutar(cabeza, o) :: aplicarA(cola, o)
+}
+```
+#### Demostración
+
+vamos a demostrar que:
+
+$$
+\forall n \in \mathbb{N},\ \forall o \in \text{Orden},\ \forall e_1, \ldots, e_n \in \text{Estado} : P_{\mathrm{apl}}(\text{List}
+(e_1, \ldots, e_n),\ o) == f_{\mathrm{apl}}(\text{List}(e_1, \ldots, e_n),\ o)
+$$
+
+La inducción es sobre $n$, la cantidad de estados. La orden $o$ es la misma en todas las llamadas recursivas, así que la 
+HI vale para ella.
+
+**Caso base.** Si `estados= Nil`, el programa devuelve `Nil`, la lista vacía no contiene estados que deban procesarse, por lo que 
+el resultado coincide con la especificación.
+
+Por otro lado, $f_{\mathrm{apl}}(\text{Nil}, o) =\text{List}() = \text{Nil}$. Entonces $P_{\mathrm{apl}}(\text{Nil}, o) ==
+f_{\mathrm{apl}}(\text{Nil}, o)$.
+
+**Caso inducción.** $n =k + 1$, $k \geq 0$, Con $\texttt{cabeza} = e_1$ y $\texttt{cola} = \text{List}(e_2, \ldots, e_{k+1})$,
+por el modelo de sustitución.
+
+$$
+P_{\mathrm{apl}}(\text{List}(e_1, \ldots, e_{k+1}), o)
+\rightarrow \texttt{ejecutar}(e_1, o) :: P_{\mathrm{apl}}(\text{List}(e_2, \ldots, e_{k+1}), o)
+$$
+
+Usando la HI, que vale porque la cola tiene $k$ estados:
+ 
+$$
+\rightarrow \texttt{ejecutar}(e_1, o) :: \text{List}(\texttt{ejecutar}(e_2, o), \ldots, \texttt{ejecutar}
+(e_{k+1}, o)) = f_{\mathrm{apl}}(\text{List}(e_1, \ldots, e_{k+1}), o)
+$$
+
+Concluimos por inducción que `aplicarA` cumple la especificación.
 
 
+### Función `transformar`
+
+#### Especificación
+
+Sea $T_g : \text{Orden} \to \text{Orden}$ la función que reemplaza cada orden por el resultado de aplicar $g$ (el parámetro `f`
+del código) y conserva la estructura de las compuestas:
+
+$$
+\begin{aligned}
+T_g(\texttt{Avanzar}(n)) &= g(\texttt{Avanzar}(n)) \\
+T_g(\texttt{Girar}(s)) &= g(\texttt{Girar}(s)) \\
+T_g(\texttt{Repetir}(k, o)) &= \texttt{Repetir}(k, \ T_g(o)) \\
+T_g(\texttt{Secuencia}(\text{List}(o_1, \ldots, o_n))) &= \texttt{Secuencia}(\text{List}(T_g(o_1), \ldots, T_g(o_n))).
+\end{aligned}
+$$
+
+La función no ejecuta las órdenes; construye otra orden con la misma estructura de repeticiones y secuencias, transformando cada
+orden básica mediante $g$.
 
 
+#### Demostración
 
+Sea $P_{\mathrm{tra}}$ el programa `transformar`.
 
+Vamos a demostrar que:
 
+$$
+\forall o \in \text{Orden}, \ \forall g : \text{Orden} \to \text {Orden} : P_{\mathrm{tra}}(o, g) == T_g(o)
+$$
 
-### Caso 4: Función transformar
+El tipo $\text{Orden}$, se define recursivamente, así que la demostración es por **inducción estructural** sobre $o$: las 
+órdenes básicas son $\texttt{Avanzar}(n)$ y $\texttt{Girar}(s)$; las compuestas son $\texttt{Repetir}(k, o')$ y $\texttt{Secuencia}(\text{List}(o_1, \ldots, o_n))$,
+con $o', o_1, \ldots, o_n \in \text{Orden}$ (la lista puede estar vacía).
 
+`Secuencia` no llama a `transformar` sobre la lista, sino a la auxiliar `transformarLista`. Por eso se necesita este lema.
 
+**Lema auxiliar (`transformarLista).`**
+Sea $L= \text{List}(o_1, \ldots, o_n)$ tal que $P_{\mathrm{tra}}(o_i, g) == T_g(o_i)$ para todo $i$. 
 
+Entonces:
 
+$$ 
+\texttt{transformarLista}(L) == \text{List}(T_g(o_1),\ \ldots,\ T_g(o_n))
+$$
 
+Se prueba con inducción sobre $n$.
 
+*Caso base:* $n = 0$, es decir, $L= \text{Nil}$, `transformarLista(Nil)` devuelve $\text{Nil}$, que es la lista $\text{List}()$
+de cero elementos. Se cumple el lema.
+
+*Caso de inducción:* $n = k +1$, $k \geq 0$. Con $\texttt{cabeza} = o_1$ y $\texttt{cola} = \text{List}(o_2, \ldots, o_{k+1})$:
+
+$$ 
+\texttt{transformarLista}(L) \rightarrow P_{\mathrm{tra}}(o_1, g) :: \texttt{transformarLista}(\text{List}(o_2, \ldots, o_{k+1}))
+$$
+
+Por la suposición del lema y la Hipótesis, esto es $T_g(o_1) :: \text{List}(T_g(o_2), \ldots, T_g(o_{k+1}))$, que es el lado derecho.
+Concluimos por inducción que el lema vale.
+
+**Caso base:**  `Avanzar(n)` y `Girar(s)`: el programa devuelve `f(o)`, que es $T_g(o)$.
+
+**Caso `Repetir(k, o')`:** por la Hipótesis, $P_{\mathrm{tra}}(o', g) == T_g(o')$, así que $\texttt{Repetir}(k, P_{\mathrm{trat}}
+(o', g)) = \texttt{Repetir}(k, T_g(o')) = T_g(\texttt{Repetir}(k, o'))$.
+
+**Caso `Secuencia`:** por la HI cada $o_i$ cumple la suposición del lema, así que `transformarLista` da $\text{List}(T_g(o_1), 
+\ldots, T_g(o_n))$ y el resultado es $T_g(o)$.
+
+Concluimos por inducción estructural que $P_{\mathrm{tra}}(o, g) == T_g(o)$.
 
 
 ### Terminación
@@ -1483,28 +1425,34 @@ $\mathcal{E}[\mathit{cabeza}] = \mathrm{id}$, así que $\mathcal{E}[\texttt{Secu
 * $\mathit{cabezaSimplificada} = \texttt{Avanzar}(n)$ y $\mathit{colaSimplificada} = \texttt{Avanzar}(m) :: \mathit{siguiente}$: devuelve `simplificarLista(Avanzar(n + m) :: siguiente)`.
 Esta lista tiene medida menor que $ps$ (última fila de la tabla), así que por la hipótesis su resultado equivale a ella:
 
+
 $$
 \begin{aligned}
 \mathcal{E}[\texttt{Secuencia}(\texttt{Avanzar}(n+m) :: \mathit{siguiente})]
- &= \mathcal{E}[\texttt{Secuencia}(\mathit{siguiente})]\circ \mathcal{E}[\texttt{Avanzar}(n+m)] \\
- &= \mathcal{E}[\texttt{Secuencia}(\mathit{siguiente})]\circ \mathcal{E}[\texttt{Avanzar}(m)] \circ \mathcal{E}[\texttt{Avanzar}(n)] \\
- &= \mathcal{E}[\texttt{Secuencia}(\mathit{colaSimplificada})] \circ \mathcal{E}[\mathit{cabezaSimplificada}] \\
- &= \mathcal{E}[\texttt{Secuencia}(\mathit{cola})] \circ \mathcal{E}[\mathit{cabeza}] 
- \end{aligned} 
+&= \mathcal{E}[\texttt{Secuencia}(\mathit{siguiente})] \circ \mathcal{E}[\texttt{Avanzar}(n+m)] \\
+&= \mathcal{E}[\texttt{Secuencia}(\mathit{siguiente})] \circ \mathcal{E}[\texttt{Avanzar}(m)] \circ \mathcal{E}[\texttt{Avanzar}(n)] \\
+&= \mathcal{E}[\texttt{Secuencia}(\mathit{colaSimplificada})] \circ \mathcal{E}[\mathit{cabezaSimplificada}] \\
+&= \mathcal{E}[\texttt{Secuencia}(\mathit{cola})] \circ \mathcal{E}[\mathit{cabeza}]
+\end{aligned}
 $$
-La primera igualdad es la ecuación de `Secuencia`; la segunda, el Lema A; la tercera, ecuación de `Secuencia` leída al revés;
-la cuarta, las Hipótesis.
 
-* $\mathit{cabezaSimplificada} =\texttt{Avanzar}(n)$ y $ \mathit{colaSimplificada}$ no empieza con `Avanzar`: devuelve `Avanzar(n) :: colaSimplificada`.
-* Cualquier otra `cabezaSimplificada` : devuelve `cabezaSimplificada :: colaSimplificada`.
+La primera igualdad es la ecuación de `Secuencia`; la segunda, el Lema A; la tercera, la ecuación de `Secuencia` leída al revés; y la cuarta, las hipótesis inductivas.
 
-En los dos últimos, por la ecuación de `Secuencia` y HI:
+- `cabezaSimplificada = Avanzar(n)` y $\mathit{colaSimplificada}$ no empieza con `Avanzar`: devuelve `Avanzar(n) :: colaSimplificada`.
+- Cualquier otra `cabezaSimplificada`: devuelve `cabezaSimplificada :: colaSimplificada`.
+
+En los dos últimos casos, por la ecuación de `Secuencia` y la hipótesis inductiva (HI):
 
 $$
-\mathcal{E}[\texttt{Secuencia}(\mathit{cabezaSimplificada} :: \mathit{colaSimplificada})] = \mathcal{E}[\texttt{Secuencia}(\mathit{colaSimplificada})] = \circ \mathcal{E}[\mathit{cabezaSimplificada}] = 
-\mathcal{E}[\texttt{Secuencia}(\mathit{cola})] \circ \mathcal{E}[\mathit{cabeza}]
+\begin{aligned}
+\mathcal{E}[\texttt{Secuencia}(\mathit{cabezaSimplificada} :: \mathit{colaSimplificada})]
+&= \mathcal{E}[\texttt{Secuencia}(\mathit{colaSimplificada})] \circ \mathcal{E}[\mathit{cabezaSimplificada}] \\
+&= \mathcal{E}[\texttt{Secuencia}(\mathit{cola})] \circ \mathcal{E}[\mathit{cabeza}]
+\end{aligned}
 $$
+
 Los cuatro caminos cubren todas las posibilidades de `cabezaSimplificada` y `colaSimplificada`.
+
 
 Concluimos por inducción bien fundada, sobre la medida $\mu$ que baja en cada llamada recursiva, que:
 
