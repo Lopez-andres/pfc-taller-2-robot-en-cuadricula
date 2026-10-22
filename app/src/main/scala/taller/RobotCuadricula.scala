@@ -74,7 +74,7 @@ class RobotCuadricula {
       case Nil =>
         Nil
       case cabeza :: cola =>
-        ejecutar(cabeza, o) :: aplicarA(cola,o)
+        ejecutar(cabeza, o) :: aplicarA(cola, o)
     }
 
   /** Reemplaza cada orden básica por f(orden), respetando la estructura de las compuestas. */
@@ -93,6 +93,7 @@ class RobotCuadricula {
           pendientes match {
             case Nil =>
               Nil
+
             case cabeza :: cola =>
               transformar(cabeza,f) :: transformarLista(cola)
 
@@ -104,12 +105,16 @@ class RobotCuadricula {
 
   /** Una orden equivalente más corta, con las reglas del enunciado. */
   def simplificar(o: Orden): Orden = o match {
+
     case Avanzar(0) =>
       Secuencia(Nil)
+
     case Avanzar(n) =>
       Avanzar(n)
+
     case Girar(sentido) =>
       Girar(sentido)
+
     case Repetir(veces, orden) =>
       if (veces <= 0) {
         Secuencia(Nil)
@@ -117,45 +122,56 @@ class RobotCuadricula {
         simplificar(orden)
       } else {
         val simplificada = simplificar(orden)
+
         simplificada match {
           case Secuencia(Nil) =>
             Secuencia(Nil)
+
           case _ =>
             Repetir(veces, simplificada)
         }
       }
     case Secuencia(ordenes) =>
-      def simplificarLista(pendientes: List[Orden]): List[Orden] = {
+
+      def simplificarLista(pendientes: List[Orden]): List[Orden] =
+
         pendientes match {
+
           case Nil =>
             Nil
+
           case cabeza :: cola =>
-            val primera = simplificar(cabeza)
-            val resto = simplificarLista(cola)
-            primera match {
+            val cabezaSimplificada = simplificar(cabeza)
+            val colaSimplificada = simplificarLista(cola)
+
+            cabezaSimplificada match {
+
               case Secuencia(Nil) =>
-                resto
+                colaSimplificada
+
               case Avanzar(n) =>
-                resto match {
+                colaSimplificada  match {
+
                   case Avanzar(m) :: siguiente =>
                     simplificarLista(Avanzar(n + m) :: siguiente)
                   case _ =>
-                    Avanzar(n) :: resto
+                    Avanzar(n) :: colaSimplificada
                 }
               case otra =>
-                otra :: resto
+                otra :: colaSimplificada
             }
         }
-      }
-      val resultado = simplificarLista(ordenes)
+      val listaSimplificada = simplificarLista(ordenes)
 
-      resultado match {
+        listaSimplificada match {
         case Nil =>
           Secuencia(Nil)
+
         case cabeza :: Nil =>
           cabeza
+
         case _ =>
-          Secuencia(resultado)
+          Secuencia(listaSimplificada)
       }
 
     }
