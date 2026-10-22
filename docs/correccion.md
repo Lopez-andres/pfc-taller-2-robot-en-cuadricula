@@ -26,7 +26,7 @@ Notación: $P(x) \rightarrow e$  indica un paso de evaluación del programa seg�
 
 ## Punto 1. `girar`
 
-### Especificación 
+### Especificación
 
 Las direcciones se numeran en sentido horario con la función $\text{pos}$:
 
@@ -94,11 +94,10 @@ En las 8 parejas $P_{\text{girar}}(d,s) = g(d,s)$.
 
 Las 8 parejas de $\text{Direccion} \times \text{Sentido}$ cumplen $P_{\text{girar}}(d,s) = g(d,s)$. Por lo tanto, `girar` es correcta respecto a su especificación.
 
-
 ## Punto 2: Aplicación del orden a los estados
 
 ### Especificación
-La función $ejecutar$ recibe el estado actual y una orden. Su objetivo es devolver un nuevo estado después de realizar la instrucción, sin que esta modifique su estado
+La función `ejecutar` recibe el estado actual y una orden. Su objetivo es devolver un nuevo estado después de realizar la instrucción, sin que esta modifique su estado
 original.
 
 El estado del robot se ve representado mediante: $e = (x, y, d)$
@@ -109,33 +108,33 @@ Sea $E(e, o)$ la función que representa el resultado esperado de ejecutar una o
 - $o$: (Orden) La instrucción que ejecuta el robot
 - $e$: Estado actual del robot (posición y dirección)
 
-Para $Avanzar(n)$ las coordenadas cambian dependiendo de la dirección:
+Para `Avanzar(n)` las coordenadas cambian dependiendo de la dirección:
 
 $E((x, y, d), Avanzar(n)) = $
-- $(x, y + n, d) si d = Norte$
-- $(x, y - n, d) si d = Sur$
-- $(x + n, y, d) si d = Este$
-- $(x - n, y, d) si d = Oeste$
+- $(x, y + n, d)$ si $d = \text{Norte}$
+- $(x, y - n, d)$ si $d = \text{Sur}$
+- $(x + n, y, d)$ si $d = \text{Este}$
+- $(x - n, y, d)$ si $d = \text{Oeste}$
 
 En donde:
 - $E$: Es la función que calcula el nuevo estado después de realizar una acción
 - $n$: Cantidad de unidades que va a avanzar
 
-Para la orden $Girar(sentido)$, las coordenadas permanecen iguales y únicamente cambian la dirección:
+Para la orden `Girar(sentido)`, las coordenadas permanecen iguales y únicamente cambian la dirección:
 $E((x, y, d), Girar(s)) = (x, y, g(d, s))$
 
-- $s$: Sentido del giro (derecha o izquierda)
+- `s`: Sentido del giro (derecha o izquierda)
 
-La función $g(d, s)$ representa la función $girar$ que se explicó en el punto 1. Como tal
+La función $g(d, s)$ representa la función `girar` que se explicó en el punto 1. Como tal
 permite saber hacia que dirección queda mirando el robot después de girar a la derecha o a la izquierda
 
 Cuando una orden contiene otras órdenes, el robot las ejecuta una por una, siguiendo el orden establecido
 
 ### Algoritmo
 
-Comienza utilizando $o match$ para identificar el tipo de orden recibida, según el caso, ejecuta un avance,
+Comienza utilizando `o match` para identificar el tipo de orden recibida, según el caso, ejecuta un avance,
 realiza un giro, repite una instrucción o recorre una secuencia; permitiendo tratar las 4 alternativas del tipo
-$Orden$ de manera independiente
+`Orden` de manera independiente
 
 ```Scala
 def ejecutar(e: Estado, o: Orden): Estado = o match {
@@ -179,47 +178,45 @@ def ejecutar(e: Estado, o: Orden): Estado = o match {
     recorre(ordenes, e)
 }
 ```
-- $@$: Indica que estamos usando una anotación
-- $@annotation.tailrec$: Le indica a Scala donde encontrar esta anotación para evitar el $import$
-- $annotation$: Es un paquete de Scala que contiene anotaciones utilizadas para darle indicaciones al compilador
-- $tailrec$: Anotación que verifica que una función use recursion de cola, es decir que la llamada recursiva sea
-  su última opción
+- `@`: Indica que estamos usando una anotación
+- `@annotation.tailrec`: Le indica a Scala donde encontrar esta anotación para evitar el `import`
+- `annotation`: Es un paquete de Scala que contiene anotaciones utilizadas para darle indicaciones al compilador
+- `tailrec`: Anotación que verifica que una función use recursion de cola, es decir que la llamada recursiva sea
+  su última opción.
 
 Sea $P(e, o)$ el resultado que devuelve el programa, porque se quiere demostrar que:
 $$\forall e\ \in\ Estado, \forall o\ \in\ Orden : P(e, o) = E(e, o)$$
 
 "Para cualquier estado del robot y cualquier orden, el resultado que produce el
-programa debe deser igual al resultado esperado"
+programa debe ser igual al resultado esperado"
 
 - $P(e, o)$: Resultado que produce el programa
 - $E(e, o)$: Resultado esperado según las reglas del ejercicio
 
 ### Método: Inducción Estructural
-Para comprobar que la función $ejecutar$ funciona correctamente, se revisa los 4 tipos de órdenes que
-puede recibir el robot: $Avanzar, Girar, Repetir y Secuencia$.
+Para comprobar que la función `ejecutar` funciona correctamente, se revisa, los 4 tipos de órdenes que puede recibir el robot: `Avanzar, Girar, Repetir y Secuencia`.
 
-Primero se analizará $Avanzar y Girar$, porque son órdenes sencillas que el robot ejecuta directamente.
-Después se revisará $Repetir y Secuencia$, que contiene otras órdenes.
+Primero se analizará `Avanzar y Girar`, porque son órdenes sencillas que el robot ejecuta directamente.
+Después se revisará `Repetir y Secuencia`, que contiene otras órdenes.
 
-Para estos casos, partimos de que las órdenes internas $o$ funcionen bien $e$, comprobando que $P(e,o)=E(e,o)$
-al repetirlas o ejecutarlas una tras de la otra el robot llega al estado esperado
+Para estos casos, partimos de que las órdenes internas $o$ funcionen bien $e$, comprobando que $P(e,o)=E(e,o)$ al repetirlas o ejecutarlas una tras de la otra, el robot llega al estado esperado
 
 ### Caso base
 
 #### Caso 1: Avanzar(n)
-El programa usa $match$ sobre $e.mira$ para determinar qué coordenadas deben modificar,
+El programa usa `match` sobre $e.mira$ para determinar qué coordenadas deben modificar,
 si el robot mira al norte, devuelve:
-- $match$: Sirve para comprobar un valor y decidir que acción se realiza segun el caso
+- `match`: Sirve para comprobar un valor y decidir que acción se realiza segun el caso
 - $e.mira$: Permite consultar la dirección hacia la que se está mirando
 
 ```Scala
 e.copy(y = e.y + n)
 ```
-- $.copy$: Crea una copia del estado a partir del anterior, cambiando solo los valores que se le indiquen,
+- `.copy`: Crea una copia del estado a partir del anterior, cambiando solo los valores que se le indiquen,
   sin modificar el original
-- $y = $: Indica que se cambia la coordenada vertical
-- $e.y$: Valor actual de la coordenada y
-- $+ n$: Suma la cantidad de pasos que se debe avanzar
+- `y = `: Indica que se cambia la coordenada vertical
+- `e.y`: Valor actual de la coordenada y
+- `+ n`: Suma la cantidad de pasos que se debe avanzar
 
 Ejemplo:
 Si tenemos
@@ -242,10 +239,10 @@ P((2, 3, Norte), Avanzar(4)) =  (2, 7, Norte)
 ```
 Este resultado coincide con la especificación $E$
 
-Los casos $Sur, Este y Oeste$ siguen el mismo razonamiento, modificando la coordenada correspondiente.
+Los casos `Sur, Este y Oeste` siguen el mismo razonamiento, modificando la coordenada correspondiente.
 
 #### Caso especial: Avanzar con pasos negativos
-La función $ejecutar$ permite que el robot retroceda cuando recibe un número negativo de pasos.
+La función `ejecutar` permite que el robot retroceda cuando recibe un número negativo de pasos.
 No es necesario agregar otra condición al código, porque las mismas operaciones de suma y resta permiten calcular
 el movimiento.
 
@@ -261,7 +258,7 @@ Ejemplo:
 val e = Estado(2, 3, Norte)
 val n = -2
 ```
-Sí lo ejecutamos, se realia la operación
+Sí lo ejecutamos, se realiza la operación
 ```Scala
 y = 3 + (-2) 
 y = 1
@@ -270,6 +267,7 @@ Dando como resultado:
 ```Scala
 Estado(2, 1, Norte)
 ```
+
 Retrocediendo 2 unidades, pasando de la posición (2, 3) a (2, 1); sin embargo, continúa mirando al norte.
 
 Ocurriendo lo mismo con las demás direcciones
@@ -287,7 +285,7 @@ e.copy(mira = girar(e.mira, sentido))
 Como $copy$ conserva las coordenadas que no se modifican, solamente cambia la dirección,
 por lo cual:
 $P((x, y, d), Girar(s)) =  (x, y, g (d, s))$
-- $Girar(s)$: Orden de girar según el sentido
+- `Girar(s)`: Orden de girar según el sentido
 
 Ejemplo: Si se esta en (4, 7, Norte) y gira a la derecha:
 ```Scala
@@ -302,15 +300,16 @@ Como la corrección de $girar$ se demostró en el punto $1$, el resultado coinci
 La orden $Repetir(veces, orden)$ permite ejecutar una misma instrucción varias veces.
 Para justificar este caso, partimos en un caso en donde no hay repeticiones y después analizamos que sucede cuando
 se agrega una repetición más.
-- $repetir(veces, e)$: Inicia la función auxiliar, se ejecuta hasta completar tosas las repeticiones
+- $repetir(veces, e)$: Inicia la función auxiliar, se ejecuta hasta completar todas las repeticiones
 - $veces$: Cuantas repeticiones deben realizarse
 - $e$: Estado inicial del robot
 
 Matemáticamente, se podría expresar como: $R(k, e, o)$.
 Sea $R$ el estado obtenido después de ejecutar una orden $o$ exactamente $k$ veces, comenzando desde el estado $e$,
-donde $k >= 0$
+donde $k \geq 0$.
 
 $R(0, e, o) = e$ Si no hay repeticiones entonces se conserva el estado
+
 $R(k + 1, e, o) = R(k, E(e, o), o)$ Primero se ejecuta una orden y luego se continua con las repeticiones pendientes
 
 #### Caso base: Cero o menos repeticiones
@@ -322,7 +321,7 @@ if (restantes <= 0 ){
 actual
 }
 ```
-Este comportamiento se expresa matemáticamente asi: $P(e, Repetir(v, o)) = e, v <= 0$
+Este comportamiento se expresa matemáticamente así: $P(e, \texttt{Repetir}(v, o)) = e, v \leq 0$.
 - $v$: Cantidad de veces que se repite una orden
 
 - $restantes$: Índica cuantas veces falta ejecutar la orden
@@ -338,7 +337,7 @@ val orden = Repetir(0, Avanzar(5))
 ```
 Entonces cuando se llama a $ejecutar(e, orden)$ la función auxiliar recibe 0 repeticiones
 y junto con el estado (3, 2, Norte)
-Como se cumple $restantes <= 0$ entonces devuelve el mismo estado
+Como se cumple $restantes \le 0$. entonces devuelve el mismo estado
 
 ```Scala
 Estado(3, 2, Norte)
@@ -354,7 +353,7 @@ con lo establecido en la especificación "No se ejecuta ninguna orden y se devue
 #### Caso recursivo: $k + 1$ Repeticiones pendientes
 Para comprobar que la función $repetir$ esté funcionando correctamente, comenzamos suponiendo que puede
 realizar correctamente $k$ repeticiones
--$k$: Cantidad de repeticiones
+- $k$: Cantidad de repeticiones
 
 Cuando queda $k + 1$ repeticiones, primero realiza la orden sobre el estado actual y luego llama a
 la función $repetir$, disminuyendo la cantidad de repeticiones pendiente.
@@ -401,7 +400,7 @@ para continuar hasta el resultado esperado
 ### Caso recursivo: Secuencia
 
 #### Caso base: Lista vacía
-La orden $Secuencia(ordenes)$ permite ejecutar una lista de instrucciones en el orden establecido
+La orden `Secuencia(ordenes)` permite ejecutar una lista de instrucciones en el orden establecido
 Esta comienza llamando a
 ```Scala
 recorre(ordenes, e)
@@ -427,8 +426,7 @@ Expresándose matemáticamente:
 $P(e, Secuencia(Nil)) = e$
 
 Ejemplo:
-$P((2, 3, Norte), Secuencia(Nil))$
-$ = (2, 3, Norte)$
+$P((2, 3, Norte), Secuencia(Nil)) = (2, 3, Norte)$
 
 Quedando demostrado que, cuando no hay órdenes por ejecutar, el robot permanece en la misma posición y dirección.
 
@@ -448,23 +446,16 @@ val e = Estado(2, 3, Norte)
 val orden = Secuencia(List(Avanzar(2), Girar(Derecha)))
 ejecutar(e, orden)
 ```
-Resultados de la secuencia:
-
-| Paso            | Operación realizada        | Estado obtenido | Órdenes pendientes |
-|-----------------|----------------------------|-----------------|--------------------|
-| Inicial         | —                          | (2, 3, Norte)   | 2                  |
-| Primera         | $3+2=5$                    | (2, 5, Norte)   | 1                  |
-| Segunda         | $Norte \rightarrow  Este$  | (2, 5, Este)    | 0                  |
-| Resultado final | $P(e, Secuencia(Nil)) = e$ | (2, 5, Este)    | 0                  |
 
 Dando como resultado final $Estado(2, 5, Este)$
 
-Y en expresión matematica es: $E(e, Secuencia([o1, o2])) = E(E(e, o1), o2)$
+Y en expresión matematica es: $E(e, Secuencia([o_1, o_2])) = E(E(e, o_1), o_2)$
 - $e$: Estado inicial
-- $o1$: Primera orden
-- $o2$: Segunda orden
-- $(E(e, o1)$: Estado obtenido después de ejecutar la primera orden
-- $E(E(e, o1), o2)$: Estado obtenido después de ejecutar la segunda orden
+- $o_1$: Primera orden
+- $o_2$: Segunda orden
+- $E(e, o_1)$: Estado obtenido después de ejecutar la primera orden
+- $E(E(e, o_1), o_2)$: Estado obtenido después de ejecutar la segunda orden
+
 
 Resultado de la secuencia:
 
@@ -479,7 +470,7 @@ Por lo tanto, $Secuencia$ ejecuta las instrucciones en el orden indicado, utiliz
 con la siguiente. Coincidiendo con el comportamiento esperado
 
 ### Terminación
-La función $ejecutar$ termina porque cada vez que se hace una llamada recursiva, se acerca a una condición que permite
+La función `ejecutar` termina porque cada vez que se hace una llamada recursiva, se acerca a una condición que permite
 detener el proceso llamado como "caso base".
 
 #### En repetir
@@ -527,7 +518,8 @@ List(Avanzar(2), Girar(Derecha))
 List(Girar(Derecha))
 Nil
 ```
-Cuando llega a $Nil$ se ejecuta:
+
+Cuando llega a `Nil` se ejecuta:
 ```Scala
 case Nil => actual
 ```
@@ -537,7 +529,7 @@ Demostrando que las ordenes, las listas y las repeticiones son finitas, además 
 termina después de completar las instrucciones.
 
 ### Comprobación del resultado
-Para comprobar el funcionamiento de $ejecutar$, se utilizará el siguiente ejemplo:
+Para comprobar el funcionamiento de `ejecutar`, se utilizará el siguiente ejemplo:
 
 ```Scala
 val e = Estado(1, 2, Este)
@@ -559,15 +551,14 @@ Ls operaciónes realizadas son:
 | Tercera    | $5+2=7$   | (7, 2, Este)    |
 
 Matemáticamente, se puede calcular la posición horizontal final sumando los pasos realizados en las 3 repeticiones:
-$x_f = 1 + 3(2)$
-$1 + 6 = 7$
+$x_f = 1 + 3 \cdot 2 = 7$
 
 La coordenada vertical no cambia $y_f = 2$
 
 Por lo tanto, el estado final es:
 
 ```Scala
-Estado (7, 2, Este)
+Estado(7, 2, Este)
 ```
 
 $P((1, 2, Este), Repetir(3, Avanzar(2))) = (7, 2, Este)$
@@ -587,8 +578,7 @@ $\forall e \in Estado, \forall o \in Orden: P(e, o) = E (e, o)$
 Esta expresión indica que "Para cualquier estado $e$ y orden $o$ válidos, el resultado del programa $P(ejecutar)$
 coincide con el comportamiento definido en la especificación $E$"
 
-
-## Punto 3. `cuantasBasicas` y `profundidad`
+## Punto 3. cuantasBasicas y profundidad
 
 ### Especificación
 
@@ -648,6 +638,7 @@ vale para cada $o_i$, porque cada una es parte de la secuencia.
 
 Los programas recorren la lista interna con funciones que no son parte de la orden: `cuantasBasicas` llama a $\text{Secuencia}(xs)$, que no es una parte de $\text{Secuencia}(x::xs)$, y `profundidad`
 usa `maximo`. Por eso antes se demuestran dos lemas sobre listas, por inducción sobre su longitud $n$.
+
 
 ### Lema 1 (lista en `cuantasBasicas`)
 
@@ -749,20 +740,87 @@ $$\forall o \in \text{Orden} : P_B(o) = B(o) \;\land\; P_D(o) = D(o)$$
 
 Por lo tanto, `cuantasBasicas` y `profundidad` son correctas respecto a su especificación, siempre que el resultado de `cuantasBasicas` esté dentro del rango de un `Int`.
 
+## Punto 4. `aplicarA`  y `transformar`
+
+### Función `aplicarA`
+
+#### Especificación
+
+Sea $f_{\mathrm{apl}} : \text{List}[\text{Estado}] \times \text{Orden} \to \text{List}[\text{Estado}]$ la función que ejecuta
+la misma orden sobre cada estado de la lista: para $L = \text{List}(e_1, \ldots, e_n)$,
+
+$$
+f_{\mathrm{apl}}(L, o) = \text{List}(\texttt{ejecutar}(e_1, o),\ \ldots, \ \texttt{ejecutar}(e_n, o))
+$$
+
+#### Programa
+
+Y sea $P_{\mathrm{apl}}$ el siguiente programa en Scala:
+
+```scala
+def aplicarA(estados: List[Estado], o: Orden): List[Estado] =
+    estados match {
+      case Nil =>
+          Nil
+      case cabeza :: cola =>
+          ejecutar(cabeza, o) :: aplicarA(cola, o)
+}
+```
+#### Demostración
+
+vamos a demostrar que:
+
+$$
+\forall n \in \mathbb{N},\ \forall o \in \text{Orden},\ \forall e_1, \ldots, e_n \in \text{Estado} : P_{\mathrm{apl}}(\text{List}
+(e_1, \ldots, e_n),\ o) == f_{\mathrm{apl}}(\text{List}(e_1, \ldots, e_n),\ o)
+$$
+
+La inducción es sobre $n$, la cantidad de estados. La orden $o$ es la misma en todas las llamadas recursivas, así que la
+HI vale para ella.
+
+**Caso base.** Si `estados= Nil`, el programa devuelve `Nil`, la lista vacía no contiene estados que deban procesarse, por lo que
+el resultado coincide con la especificación.
+
+Por otro lado, $f_{\mathrm{apl}}(\text{Nil}, o) =\text{List}() = \text{Nil}$. Entonces $P_{\mathrm{apl}}(\text{Nil}, o) ==
+f_{\mathrm{apl}}(\text{Nil}, o)$.
+
+**Caso inducción.** $n =k + 1$, $k \geq 0$, Con $\texttt{cabeza} = e_1$ y $\texttt{cola} = \text{List}(e_2, \ldots, e_{k+1})$,
+por el modelo de sustitución.
+
+$$
+P_{\mathrm{apl}}(\text{List}(e_1, \ldots, e_{k+1}), o)
+\rightarrow \texttt{ejecutar}(e_1, o) :: P_{\mathrm{apl}}(\text{List}(e_2, \ldots, e_{k+1}), o)
+$$
+
+Usando la HI, que vale porque la cola tiene $k$ estados:
+
+$$
+\rightarrow \texttt{ejecutar}(e_1, o) :: \text{List}(\texttt{ejecutar}(e_2, o), \ldots, \texttt{ejecutar}
+(e_{k+1}, o)) = f_{\mathrm{apl}}(\text{List}(e_1, \ldots, e_{k+1}), o)
+$$
+
+Concluimos por inducción que `aplicarA` cumple la especificación.
 
 
-## Punto 4 Rutinas con funciones de alto orden
 
-### Especificación
-En este punto se desarrolló 4 funciones; $componer$, $rutina$, $aplicarA$ y $transformar$.
-Cada una te permite realizar una tarea diferente con las órdenes del robot
-- $componer$: Une 2 órdenes en una secuencia, respetando el orden en que se reciben
-- $rutina$: Crea una orden que permite avanzar, girar y repetir estas acciones en una cantidad determinada de veces
-- $aplicarA$: Ejecuta una misma orden sobre cada uno de los estados de una lista y devuelve los resultados
-- $transformar$: Cambia las órdenes básicas mediante una función, manteniendo la estructura de las órdenes compuestas
+### Función `transformar`
 
-El objetivo es demostrar que cada función realiza correctamente lo que se le pide, y que los resultados obtenidos
-correspondan con los esperados
+#### Especificación
+
+Sea $T_g : \text{Orden} \to \text{Orden}$ la función que reemplaza cada orden por el resultado de aplicar $g$ (el parámetro `f`
+del código) y conserva la estructura de las compuestas:
+
+$$
+\begin{aligned}
+T_g(\texttt{Avanzar}(n)) &= g(\texttt{Avanzar}(n)) \\
+T_g(\texttt{Girar}(s)) &= g(\texttt{Girar}(s)) \\
+T_g(\texttt{Repetir}(k, o)) &= \texttt{Repetir}(k, \ T_g(o)) \\
+T_g(\texttt{Secuencia}(\text{List}(o_1, \ldots, o_n))) &= \texttt{Secuencia}(\text{List}(T_g(o_1), \ldots, T_g(o_n))).
+\end{aligned}
+$$
+
+La función no ejecuta las órdenes; construye otra orden con la misma estructura de repeticiones y secuencias, transformando cada
+orden básica mediante $g$.
 
 
 #### Programa
@@ -793,12 +851,116 @@ correspondan con los esperados
     
 ```
 
+#### Demostración
+
+Sea $P_{\mathrm{tra}}$ el programa `transformar`.
+
+Vamos a demostrar que:
+
+$$
+\forall o \in \text{Orden}, \ \forall g : \text{Orden} \to \text{Orden} : P_{\mathrm{tra}}(o, g) == T_g(o)
+$$
+
+El tipo $\text{Orden}$, se define recursivamente, así que la demostración es por **inducción estructural** sobre $o$: las
+órdenes básicas son $\texttt{Avanzar}(n)$ y $\texttt{Girar}(s)$; las compuestas son $\texttt{Repetir}(k, o')$ y $\texttt{Secuencia}(\text{List}(o_1, \ldots, o_n))$,
+con $o', o_1, \ldots, o_n \in \text{Orden}$ (la lista puede estar vacía).
+
+`Secuencia` no llama a `transformar` sobre la lista, sino a la auxiliar `transformarLista`. Por eso se necesita este lema.
+
+**Lema auxiliar (`transformarLista`).**
+Sea $L= \text{List}(o_1, \ldots, o_n)$ tal que $P_{\mathrm{tra}}(o_i, g) == T_g(o_i)$ para todo $i$.
+
+Entonces:
+
+$$
+\texttt{transformarLista}(L) == \text{List}(T_g(o_1),\ \ldots,\ T_g(o_n))
+$$
+
+Se prueba con inducción sobre $n$.
+
+*Caso base:* $n = 0$, es decir, $L= \text{Nil}$, `transformarLista(Nil)` devuelve $\text{Nil}$, que es la lista $\text{List}()$
+de cero elementos. Se cumple el lema.
+
+*Caso de inducción:* $n = k +1$, $k \geq 0$. Con $\texttt{cabeza} = o_1$ y $\texttt{cola} = \text{List}(o_2, \ldots, o_{k+1})$:
+
+$$
+\texttt{transformarLista}(L) \rightarrow P_{\mathrm{tra}}(o_1, g) :: \texttt{transformarLista}(\text{List}(o_2, \ldots, o_{k+1}))
+$$
+
+Por la suposición del lema y la Hipótesis, esto es $T_g(o_1) :: \text{List}(T_g(o_2), \ldots, T_g(o_{k+1}))$, que es el lado derecho.
+Concluimos por inducción que el lema vale.
+
+**Caso base:**  `Avanzar(n)` y `Girar(s)`: el programa devuelve `f(o)`, que es $T_g(o)$.
+
+**Caso `Repetir(k, o')`:** por la Hipótesis, $P_{\mathrm{tra}}(o', g) == T_g(o')$, así que $\texttt{Repetir}(k, P_{\mathrm{tra}}
+(o', g)) = \texttt{Repetir}(k, T_g(o')) = T_g(\texttt{Repetir}(k, o'))$.
+
+**Caso `Secuencia`:** por la HI cada $o_i$ cumple la suposición del lema, así que `transformarLista` da $\text{List}(T_g(o_1),
+\ldots, T_g(o_n))$ y el resultado es $T_g(o)$.
+
+Concluimos por inducción estructural que $P_{\mathrm{tra}}(o, g) == T_g(o)$.
+
+### Componer y rutina
+
+### Especificación
+En este punto se desarrolló 4 funciones; `componer`, `rutina`, `aplicarA` y `transformar`.
+Cada una te permite realizar una tarea diferente con las órdenes del robot
+- `componer`: Une 2 órdenes en una secuencia, respetando el orden en que se reciben
+- `rutina`: Crea una orden que permite avanzar, girar y repetir estas acciones en una cantidad determinada de veces
+- `aplicarA`: Ejecuta una misma orden sobre cada uno de los estados de una lista y devuelve los resultados
+- `transformar`: Cambia las órdenes básicas mediante una función, manteniendo la estructura de las órdenes compuestas
+
+El objetivo es demostrar que cada función realiza correctamente lo que se le pide, y que los resultados obtenidos
+correspondan con los esperados
+
+### Algoritmo
+
+Las funciones que se analizarán son:
+
+```Scala
+def componer(o1: Orden, o2: Orden): Orden =
+  Secuencia(List(o1, o2))
+
+def rutina(pasos: Int)(giro: Sentido)(veces: Int): Orden =
+  Repetir(veces, componer(Avanzar(pasos), Girar(giro)))
+
+def aplicarA(estados: List[Estado], o: Orden): List[Estado] =
+  estados match {
+    case Nil =>
+      Nil
+    case cabeza :: cola =>
+      ejecutar(cabeza, o) :: aplicarA(cola, o)
+  }
+
+def transformar(o: Orden, f: Orden => Orden): Orden =
+  o match {
+    case Avanzar(_) =>
+      f(o)
+
+    case Girar(_) =>
+      f(o)
+
+    case Repetir(veces, orden) =>
+      Repetir(veces, transformar(orden, f))
+
+    case Secuencia(ordenes) =>
+      def transformarLista(pendientes: List[Orden]): List[Orden] =
+        pendientes match {
+          case Nil =>
+            Nil
+          case cabeza :: cola =>
+            transformar(cabeza, f) :: transformarLista(cola)
+        }
+
+      Secuencia(transformarLista(ordenes))
+  }
+```
 ### Método de demostración
 
 Para justificar la corrección de estas funciones se utilizaron 2 métodos:
-- **Demostración directa**: Para $componer$ y $rutina$, porque únicamente construyen órdenes y no
+- **Demostración directa**: Para `componer` y `rutina`, porque únicamente construyen órdenes y no
   realizan llamadas recursivas
-- **Inducción**: Para $aplicarA$ y $transformar$, porque deben procesar estructuras que pueden contener varios elementos
+- **Inducción**: Para `aplicarA` y `transformar`, porque deben procesar estructuras que pueden contener varios elementos
   En cada paso se compara el comportamiento del programa con el resultado que debería obtenerse según la especificación
 
 ### Casos de demostración directa
@@ -812,7 +974,7 @@ Sea $C(o_1, o_2)$ el resultado esperado $C(o_1, o_2) = Secuencia([o_1, o_2])$
 
 - $o_1$: Primer orden
 - $o_2$: Segundo orden
-- $C$: Resultado esperado de $componer$
+- $C$: Resultado esperado de `componer`
 
 #### Demostración directa
 
@@ -837,7 +999,7 @@ Ejemplo: Consideremos $componer(Girar(Derecha), Avanzar(3))$
 Entonces la función construye:
 
 ```Scala
-Secuencia(List(Girar(Derecha)), Avanzar(3)))
+Secuencia(List(Girar(Derecha), Avanzar(3)))
 ```
 Si el robot comienza en Estado(0, 0, Norte), las instrucciones se ejecutan así:
 
@@ -855,7 +1017,7 @@ Siendo el resultado:
 ```Scala
 Secuencia(List(Secuencia(Nil), Avanzar(4)))
 ```
-La orden vacía permanece dentro de la nueva secuencia, porque $componer$ no elimina ni simplifica instrucciones
+La orden vacía permanece dentro de la nueva secuencia, porque `componer` no elimina ni simplifica instrucciones
 
 Cumpliéndose asi la especificación para cualquier par de órdenes
 
@@ -865,10 +1027,10 @@ Cumpliéndose asi la especificación para cualquier par de órdenes
 Recibe una cantidad de pasos, un sentido de giro y un número de repeticiones; teniendo como objetivo
 construir una orden que permita avanzar, girar y repetir entre ambas instrucciones.
 
-Sea $R(p, s, v)$ el resultado esperado: $R(p, s, v) = Repetir(v,C(Avanzar(p), Girar(s)))$
+Sea $U(p, s, v)$ el resultado esperado: $U(p, s, v) = Repetir(v,C(Avanzar(p), Girar(s)))$
 - $s$: Sentido del giro
 - $v$: Número de repeticiones
-- $R$: Resultado esperado de la función $rutina$
+- $U$: Resultado esperado de la función $rutina$
 - $p$: Cantidad de pasos que avanza el robot
 
 #### Demostración directa:
@@ -884,17 +1046,17 @@ Entonces:
 // Primero se construye las órdenes
 Avanzar(pasos)
 Girar(giro)
-// Luego la función $componer$ agrupa ambas instrucciones
+// Luego la función componer agrupa ambas instrucciones
 componer(Avanzar(pasos), Girar(giro))
-// Como se demostró anteriormente $componer$ produce
+// Como se demostró anteriormente componer produce
 Secuencia(List(Avanzar(pasos), Girar(giro)))
-// Finalmente, $Repetir$ recibe esa secuencia y la cantidad de veces solicitada
+// Finalmente, Repetir recibe esa secuencia y la cantidad de veces solicitada
 Repetir(veces, Secuencia(List(Avanzar(pasos), Girar(giro)))) 
 ```
 
-Coincidiendo con la especificación $R(p, s, v)$
+Coincidiendo con la especificación $U(p, s, v)$
 
-Por lo tanto $P_R(p, s, v) = R(p, s, v)$
+Por lo tanto $P_R(p, s, v) = U(p, s, v)$
 
 El programa construye la orden que se espera, conservando los 3 argumentos recibidos
 
@@ -934,137 +1096,6 @@ ejecutar(inicial, rutina(1)(Derecha)(4))
 ```
 El robot realiza 4 avances y 4 giros
 
-
-### Función `aplicarA`
-
-#### Especificación
-
-Sea $f_{\mathrm{apl}} : \text{List}[\text{Estado}] \times \text{Orden} \to \text{List}[\text{Estado}]$ la función que ejecuta
-la misma orden sobre cada estado de la lista: para $L = \text{List}(e_1, \ldots, e_n)$,
-
-$$
-  f_{\mathrm{apl}}(L, o) = \text{List}(\texttt{ejecutar}(e_1, o),\ \ldots, \ \texttt{ejecutar}(e_n, o))
-$$
-
-Y sea $P_{\mathrm{apl}}$ el siguiente programa en Scala:
-
-#### Programa
-
-```scala
-def aplicarA(estados: List[Estado], o: Orden): List[Estado] =
-    estados match {
-      case Nil =>
-          Nil
-      case cabeza :: cola =>
-          ejecutar(cabeza, o) :: aplicarA(cola, o)
-}
-```
-#### Demostración
-
-vamos a demostrar que:
-
-$$
-\forall n \in \mathbb{N},\ \forall o \in \text{Orden},\ \forall e_1, \ldots, e_n \in \text{Estado} : P_{\mathrm{apl}}(\text{List}
-(e_1, \ldots, e_n),\ o) == f_{\mathrm{apl}}(\text{List}(e_1, \ldots, e_n),\ o)
-$$
-
-La inducción es sobre $n$, la cantidad de estados. La orden $o$ es la misma en todas las llamadas recursivas, así que la 
-HI vale para ella.
-
-**Caso base.** Si `estados= Nil`, el programa devuelve `Nil`, la lista vacía no contiene estados que deban procesarse, por lo que 
-el resultado coincide con la especificación.
-
-Por otro lado, $f_{\mathrm{apl}}(\text{Nil}, o) =\text{List}() = \text{Nil}$. Entonces $P_{\mathrm{apl}}(\text{Nil}, o) ==
-f_{\mathrm{apl}}(\text{Nil}, o)$.
-
-**Caso inducción.** $n =k + 1$, $k \geq 0$, Con $\texttt{cabeza} = e_1$ y $\texttt{cola} = \text{List}(e_2, \ldots, e_{k+1})$,
-por el modelo de sustitución.
-
-$$
-P_{\mathrm{apl}}(\text{List}(e_1, \ldots, e_{k+1}), o)
-\rightarrow \texttt{ejecutar}(e_1, o) :: P_{\mathrm{apl}}(\text{List}(e_2, \ldots, e_{k+1}), o)
-$$
-
-Usando la HI, que vale porque la cola tiene $k$ estados:
- 
-$$
-\rightarrow \texttt{ejecutar}(e_1, o) :: \text{List}(\texttt{ejecutar}(e_2, o), \ldots, \texttt{ejecutar}
-(e_{k+1}, o)) = f_{\mathrm{apl}}(\text{List}(e_1, \ldots, e_{k+1}), o)
-$$
-
-Concluimos por inducción que `aplicarA` cumple la especificación.
-
-
-### Función `transformar`
-
-#### Especificación
-
-Sea $T_g : \text{Orden} \to \text{Orden}$ la función que reemplaza cada orden por el resultado de aplicar $g$ (el parámetro `f`
-del código) y conserva la estructura de las compuestas:
-
-$$
-\begin{aligned}
-T_g(\texttt{Avanzar}(n)) &= g(\texttt{Avanzar}(n)) \\
-T_g(\texttt{Girar}(s)) &= g(\texttt{Girar}(s)) \\
-T_g(\texttt{Repetir}(k, o)) &= \texttt{Repetir}(k, \ T_g(o)) \\
-T_g(\texttt{Secuencia}(\text{List}(o_1, \ldots, o_n))) &= \texttt{Secuencia}(\text{List}(T_g(o_1), \ldots, T_g(o_n))).
-\end{aligned}
-$$
-
-La función no ejecuta las órdenes; construye otra orden con la misma estructura de repeticiones y secuencias, transformando cada
-orden básica mediante $g$.
-
-
-#### Demostración
-
-Sea $P_{\mathrm{tra}}$ el programa `transformar`.
-
-Vamos a demostrar que:
-
-$$
-\forall o \in \text{Orden}, \ \forall g : \text{Orden} \to \text {Orden} : P_{\mathrm{tra}}(o, g) == T_g(o)
-$$
-
-El tipo $\text{Orden}$, se define recursivamente, así que la demostración es por **inducción estructural** sobre $o$: las 
-órdenes básicas son $\texttt{Avanzar}(n)$ y $\texttt{Girar}(s)$; las compuestas son $\texttt{Repetir}(k, o')$ y $\texttt{Secuencia}(\text{List}(o_1, \ldots, o_n))$,
-con $o', o_1, \ldots, o_n \in \text{Orden}$ (la lista puede estar vacía).
-
-`Secuencia` no llama a `transformar` sobre la lista, sino a la auxiliar `transformarLista`. Por eso se necesita este lema.
-
-**Lema auxiliar (`transformarLista).`**
-Sea $L= \text{List}(o_1, \ldots, o_n)$ tal que $P_{\mathrm{tra}}(o_i, g) == T_g(o_i)$ para todo $i$. 
-
-Entonces:
-
-$$ 
-\texttt{transformarLista}(L) == \text{List}(T_g(o_1),\ \ldots,\ T_g(o_n))
-$$
-
-Se prueba con inducción sobre $n$.
-
-*Caso base:* $n = 0$, es decir, $L= \text{Nil}$, `transformarLista(Nil)` devuelve $\text{Nil}$, que es la lista $\text{List}()$
-de cero elementos. Se cumple el lema.
-
-*Caso de inducción:* $n = k +1$, $k \geq 0$. Con $\texttt{cabeza} = o_1$ y $\texttt{cola} = \text{List}(o_2, \ldots, o_{k+1})$:
-
-$$ 
-\texttt{transformarLista}(L) \rightarrow P_{\mathrm{tra}}(o_1, g) :: \texttt{transformarLista}(\text{List}(o_2, \ldots, o_{k+1}))
-$$
-
-Por la suposición del lema y la Hipótesis, esto es $T_g(o_1) :: \text{List}(T_g(o_2), \ldots, T_g(o_{k+1}))$, que es el lado derecho.
-Concluimos por inducción que el lema vale.
-
-**Caso base:**  `Avanzar(n)` y `Girar(s)`: el programa devuelve `f(o)`, que es $T_g(o)$.
-
-**Caso `Repetir(k, o')`:** por la Hipótesis, $P_{\mathrm{tra}}(o', g) == T_g(o')$, así que $\texttt{Repetir}(k, P_{\mathrm{trat}}
-(o', g)) = \texttt{Repetir}(k, T_g(o')) = T_g(\texttt{Repetir}(k, o'))$.
-
-**Caso `Secuencia`:** por la HI cada $o_i$ cumple la suposición del lema, así que `transformarLista` da $\text{List}(T_g(o_1), 
-\ldots, T_g(o_n))$ y el resultado es $T_g(o)$.
-
-Concluimos por inducción estructural que $P_{\mathrm{tra}}(o, g) == T_g(o)$.
-
-
 ### Terminación
 Las 4 funciones terminan siempre que la lista y órdenes sean finitas y las funciones que se utilizan también terminen
 - $componer$: No utiliza recursión. Construye una lista con 2 órdenes y devuelve una $Secuencia$,
@@ -1073,14 +1104,13 @@ Las 4 funciones terminan siempre que la lista y órdenes sean finitas y las func
   Secuencia(List(o1, o2))
   ```
 
-- $rutina$: Tampoco usa recursión. Construye las órdenes $Avanzar$ y $Girar$, las une mediante $componer$ y
-  devuelve $Repetir$. Aunque $veces$ sea un número grande, la función solamente construye la orden,
+- `rutina`: Tampoco usa recursión. Construye las órdenes $Avanzar$ y $Girar$, las une mediante `componer` y
+  devuelve `Repetir`. Aunque `veces` sea un número grande, la función solamente construye la orden,
   sin ejecutarla. Ejemplo:
   ```Scala
   Repetir(veces, componer(Avanzar(pasos), Girar(giro)))
-  ```
 
-- $aplicarA$: Utiliza recursión sobre listas. En cada llamada procesa la cola, reduciendo la cantidad de elementos
+  - `aplicarA`: Utiliza recursión sobre listas. En cada llamada procesa la cola, reduciendo la cantidad de elementos
   pendientes. Ejemplo:
   ```Scala
   List(e1, e2, e3)
@@ -1088,14 +1118,14 @@ Las 4 funciones terminan siempre que la lista y órdenes sean finitas y las func
   List(e3)
   Nil
   ```
-  Cuando llega a $Nil$, devuelve una lista vacía y termina. Como la lista disminuye en cada llamada, la recursión
+  Cuando llega a `Nil`, devuelve una lista vacía y termina. Como la lista disminuye en cada llamada, la recursión
   finaliza
 
-- $transformar$: Usa recursión estructural:
-    - $Avanzar y Girar$: Aplica $f$ directamente, sin realizar llamadas recursivas
-    - $Repetir$: Procesa una orden interna más pequeña
-    - $Secuencia$: Utiliza $transformarLista$ para asi recorrer las órdenes y reducir la lista en
-      cada llamada hasta llegar a $Nil$
+- `transformar`: Usa recursión estructural:
+    - `Avanzar y Girar`: Aplica $f$ directamente, sin realizar llamadas recursivas
+    - `Repetir`: Procesa una orden interna más pequeña
+    - `Secuencia`: Utiliza `transformarLista` para asi recorrer las órdenes y reducir la lista en
+      cada llamada hasta llegar a `Nil`
       Ejemplo:
   ```Scala
   List(o1, o2)
@@ -1107,9 +1137,9 @@ Las 4 funciones terminan siempre que la lista y órdenes sean finitas y las func
 ###  Conclusión
 Mediante la demostración directa y la inducción se justificó la corrección de las 4 funciones.
 
-$componer$ une 2 órdenes respetando su orden, $rutina$ permite construir una secuencia de avance y giro que se repite
-varias veces, $aplicarA$ usa recursión sobre la lista para ejecutar una misma orden en diferentes estados y
-$transformar$ emplea recursión estructural para modificar las órdenes básicas, conservando la
+`componer` une 2 órdenes respetando su orden, $rutina$ permite construir una secuencia de avance y giro que se repite
+varias veces, `aplicarA` usa recursión sobre la lista para ejecutar una misma orden en diferentes estados y
+`transformar` emplea recursión estructural para modificar las órdenes básicas, conservando la
 estructura de las compuestas
 
 Por tanto, las 4 funciones cumplen sus especificaciones siempre que estas terminen y produzcan los resultados esperados
@@ -1120,7 +1150,7 @@ Por tanto, las 4 funciones cumplen sus especificaciones siempre que estas termin
 ### Especificación y programa
 
 Sea $\mathcal{E}[o] : \text{Estado} \to \text{Estado}$ la función que calcula lo que hace la orden $o$, es decir
-$\mathcal{E}[o](e) = \texttt{ejecutar}(e, o)$, Sea $P_{\mathrm{sim}}$ el siguiente programa en Scala, que recibe 
+$\mathcal{E}[o](e) = \texttt{ejecutar}(e, o)$. Sea $P_{\mathrm{sim}}$ el siguiente programa en Scala, que recibe
 una orden y devuelve otra orden equivalente:
 
 ```scala
@@ -1143,7 +1173,7 @@ def simplificar(o: Orden): Orden = o match {
       } else {
         val simplificada = simplificar(orden)
 
-        simplificada match {
+  simplificada match {
           case Secuencia(Nil) =>
             Secuencia(Nil)
 
@@ -1202,15 +1232,15 @@ Vamos a demostrar que $P_{\mathrm{sim}}(o)$ hace lo mismo que $o$, desde cualqui
 
 
 $$
-\boxed{\forall o \in \text{Orden}, \ \forall e \in \text{Estado}:\ \texttt{ejecutar}(e, \texttt{simplificar}(o)) 
+\boxed{\forall o \in \text{Orden}, \ \forall e \in \text{Estado}:\ \texttt{ejecutar}(e, \texttt{simplificar}(o))
 == \texttt{ejecutar}(e, o)}
 $$
 
-También está este más corto, $\mathcal{E}[P_{\mathrm{sim}}(o)] = \mathcal{E}[o]$. 
+También está este más corto, $\mathcal{E}[P_{\mathrm{sim}}(o)] = \mathcal{E}[o]$.
 El tipo $\text{Orden}$ tiene como órdenes básicas $\texttt{Avanzar}(n)$ y $\texttt{Girar}(s)$ para todo sentido $s$, y
 órdenes compuestas: $\texttt{Repetir}(k, o)$ y $\texttt{Secuencia}(\texttt{List}(o_1, \ldots, o_n))$ con $o_1, \ldots, o_n \in \text{Orden}$ (incluida la lista vacía).
 
-La inducción no es estructural simple: al juntar dos avances, `simplificarLista` se llama sobre una lista nueva que no es 
+La inducción no es estructural simple: al juntar dos avances, `simplificarLista` se llama sobre una lista nueva que no es
 una subestructura. Por eso la inducción es **bien fundada**, sobre una medida que baja en cada llamada.
 
 ### Semántica de `ejecutar`
@@ -1220,19 +1250,19 @@ $\delta(\text{Norte}) = (0, 1)$, $\delta(\text{Este}) = (1, 0)$,
 $\delta(\text{Sur}) = (0, -1)$ y $\delta(\text{Oeste}) =(-1, 0)$.
 
 Leyendo el código de `ejecutar` se obtienen estas ecuaciones. En ellas $(x, y, \mathit{mira})$ es un estado cualquiera,
-como en `Estado(x, y, mira)`: posición $(x, y)$ y dirección $\mathit{mira}$. Además, `0` y `p` son órdenes.
+como en `Estado(x, y, mira)`: posición $(x, y)$ y dirección $\mathit{mira}$.
 
 $$
 \begin{aligned}
-\mathcal{E}[\texttt{Avanzar}(n)](x, y, \mathit{mira}) &= (x + n\,\delta_x(\mathit{mira}),\ y + 
+\mathcal{E}[\texttt{Avanzar}(n)](x, y, \mathit{mira}) &= (x + n\,\delta_x(\mathit{mira}),\ y +
 n\,\delta_y(\mathit{mira}),\ \mathit{mira}) \\
 \mathcal{E}[\texttt{Girar}(s)](x, y, \mathit{mira}) &= (x, y, \texttt{girar}(\mathit{mira}, s))
 \end{aligned}
 $$
 
-La función `girar` tiene su propia firma, `girar(d: Dirección, s: Sentido): Dirección`,
-con parámetros `d` y `s`. En la ecuación de arriba se llama con la dirección del estado (`mira`) y 
-el sentido de la orden `Girar(s)`, igual que hace el código de `ejecutar`: `Estado (e.x, e.y, girar(e.mira, sentido))`.
+La función `girar` tiene su propia firma, `girar(d: Direccion, s: Sentido): Direccion`,
+con parámetros `d` y `s`. En la ecuación de arriba se llama con la dirección del estado (`mira`) y
+el sentido de la orden `Girar(s)`, igual que hace el código de `ejecutar`: `Estado(e.x, e.y, girar(e.mira, sentido))`.
 
 $$
 \mathcal{E}[\texttt{Repetir}(k, o)] = \mathcal{E}[o]^{k}
@@ -1250,25 +1280,25 @@ Donde $f^{k}$ es aplicar $f$ $k$ veces, y $f^{k} = \mathrm{id}$ si $k \leq 0$ (n
 o menos veces simplemente no hace nada).
 Una composición $g \circ f$ significa "primero $f$, después $g$".
 
-**`Secuencia`.** El auxiliar `ejecutarLista(estado, cabeza:: cola)`, devuelve `ejecutarLista(ejecutar(estado, cabeza), cola)`.
+**`Secuencia`.** El auxiliar `recorre(pendientes, actual)`, devuelve `recorre(XS, ejecutar(actual, x))`.
 
-Es decir, ejecutar `cabeza` y sigue con el resto, que es exactamente $\mathcal{E}[\texttt{Secuencia}(\mathit{cola})] \circ \mathcal{E}[\mathit{cabeza}]$.
+Es decir, `x y xs`, que es exactamente $\mathcal{E}[\texttt{Secuencia}(\mathit{cola})] \circ \mathcal{E}[\mathit{cabeza}]$.
 Con `Nil` no hace nada.
 
-**Por qué vale la ecuación de `Repetir`.** El auxiliar `repetir(restante, estado)` hace:
-* si `restantes <= 0`, devuelve `estado`.
-* si no, devuelve `repetir(restantes -1, ejecutar(estado, orden))`.
+**Por qué vale la ecuación de `Repetir`.** El auxiliar `repetir(restantes, actual)` hace:
+* si `restantes <= 0`, devuelve `actual`.
+* si no, devuelve `repetir(restantes - 1, ejecutar(actual, orden))`.
 
 *Afirmación:* `repetir(r, e)` $= \mathcal{E}[o]^{r}(e)$. Se prueba por inducción sobre $r$.
 
 * **Caso base,** $r \leq 0$: devuelve $e$, que es $\mathcal{E}[o]^{r}(e)$ porque  $f^{r} = \mathrm{id}$
-si $r \leq 0$.
+  si $r \leq 0$.
 
 * **Caso de inducción,** $r > 0$. La hipótesis es que `repetir(r - 1, e')` $=\mathcal{E}[o]^{r-1}(e')$ para todo $e'$. Entonces  
-    `repetir(r, e)` $=$ `repetir(r - 1,` $\mathcal{E}[o]{(e)}$`)` $=\mathcal{E}[o]^{r-1}(\mathcal{E}[o](e)) =\mathcal{E}[o]^{r}(e)$.
+  `repetir(r, e)` $=$ `repetir(r - 1,` $\mathcal{E}[o]{(e)}$`)` $=\mathcal{E}[o]^{r-1}(\mathcal{E}[o](e)) =\mathcal{E}[o]^{r}(e)$.
 
-**Nota sobre el tamaño de los enteros.** Las coordenadas son `Int`de 32 bits. Con valores normales no hay desbordamiento, si algún valor se pasara 
-del máximo, el resultado "daría la vuelta", lo cual equivale a hacer las cuentas módulo 2^32. En esa aritmética la suma sigue siendo 
+**Nota sobre el tamaño de los enteros.** Las coordenadas son `Int` de 32 bits. Con valores normales no hay desbordamiento, si algún valor se pasara
+del máximo, el resultado "daría la vuelta", lo cual equivale a hacer las cuentas módulo $2^{32}$. En esa aritmética la suma sigue siendo
 asociativa y conmutativa, así que las igualdades de este informe valen también en ese caso extremo.
 
 ### Lemas de equivalencia
@@ -1281,7 +1311,7 @@ x + n\,\delta_x(\mathit{mira}) + m\,\delta_x(\mathit{mira}) = x + (n + m)\,\delt
 $$
 Lo mismo con $y$. $\square$ Si hubiera un `Girar` en medio no valdría, y por eso el código solo junta avances contiguos.
 
-**Lema Z(órdenes que no hacen nada).**
+**Lema Z (órdenes que no hacen nada).**
 
 1. $\mathcal{E}[\texttt{Avanzar}(0)] = \mathrm{id}$, porque suma $0 \cdot\delta =(0,0)$.
 2. $\mathcal{E}[\texttt{Secuencia}(\texttt{Nil})] = \mathrm{id}$, por su ecuación.
@@ -1305,7 +1335,7 @@ sí solo no basta para la inducción.
 Se usa un par ordenado de forma lexicográfica (primero se compara el primer número, y solo si empatan, el segundo):
 
 $$
-\mu(o) =(t(o), 0)\quad \text{para una orden } o, \qquad \mu(ps) = (T(ps), 1) \quad \text{para una lista }ps 
+\mu(o) =(t(o), 0)\quad \text{para una orden } o, \qquad \mu(ps) = (T(ps), 1) \quad \text{para una lista }ps
 $$
 
 El segundo número da prioridad a la lista sobre las órdenes cuando el tamaño empata. Como el primer número es un entero positivo
@@ -1325,6 +1355,7 @@ $t(\texttt{simplificar}(o)) \leq t(o)$ y $T(\texttt{simplificarLista}(ps)) \leq 
 
 Se prueba por inducción bien fundada sobre $\mu$, con la HI sobre las llamadas de medida menor (por lo anterior). No hay circularidad: el lema T solo usa la HI sobre medidas menores.
 
+
 | Caso | Tamaño de la entrada | Tamaño de la salida |
 |---|---|---|
 | `Avanzar(0)` | 1 | 1 (`Secuencia(Nil)`) |
@@ -1336,7 +1367,7 @@ Se prueba por inducción bien fundada sobre $\mu$, con la HI sobre las llamadas 
 | Lista, `cabezaSimplificada` no se junta | $t(\text{cabeza}) + T(\text{cola})$ | $t(\text{cabezaSimplificada}) + T(\text{colaSimplificada}) \leq t(\text{cabeza}) + T(\text{cola})$ (hipótesis) |
 | `Secuencia(ps)`, resultado vacío, de un elemento $p$, o varias | $1 + T(ps)$ | 1, o $t(p) \leq T(\text{listaSimplificada}) \leq T(ps)$, o $1 + T(\text{listaSimplificada}) \leq 1 + T(ps)$ (hipótesis) | 
 
-**Caso de juntar avances.** Sea `cabezaSimplificada`$= \texttt{Avanzar}(n)$ y `colaSimplificada` $=\texttt{Avanzar}(m) :: \text{siguiente}$. 
+**Caso de juntar avances.** Sea `cabezaSimplificada`$= \texttt{Avanzar}(n)$ y `colaSimplificada` $=\texttt{Avanzar}(m) :: \text{siguiente}$.
 La lista que se pasa a la nueva llamada es $\texttt{Avanzar}(n + m) :: \text{siguiente}$, y su tamaño es:
 
 $$
@@ -1352,7 +1383,7 @@ Para toda orden $o$ y toda lista $ps$ de órdenes se demuestra:
 \qquad \text{y} \qquad
 \mathcal{E}[\texttt{Secuencia}(\texttt{simplificarLista}(ps))] == \mathcal{E}[\texttt{Secuencia}(ps)]
 ```
-La segunda afirmación se necesita para el caso de `Secuencia`, y las dos se demuestran juntas por **inducción bien fundada sobre 
+La segunda afirmación se necesita para el caso de `Secuencia`, y las dos se demuestran juntas por **inducción bien fundada sobre
 $\mu$**: se supone que ambas valen para todo lo de medida menor (HI), lo que justifica cada "por la HI" de abajo.
 
 **Caso base:** $o =\texttt{Avanzar}(0)$
@@ -1362,7 +1393,7 @@ P_{\mathrm{sim}}(\texttt{Avanzar}(0)) \rightarrow \texttt{Secuencia}
 (\texttt{Nil})
 ```
 
-Por el Lema Z, $\mathcal{E}[\texttt{Avanzar}(0)] = \mathrm{id} = \mathcal{E}[\texttt{Secuencia}(\texttt{Nil})]$. 
+Por el Lema Z, $\mathcal{E}[\texttt{Avanzar}(0)] = \mathrm{id} = \mathcal{E}[\texttt{Secuencia}(\texttt{Nil})]$.
 
 **Caso base:** $o =\texttt{Avanzar}(n)$ con $n \neq 0$ y $o = \texttt{Girar}(s)$
 
@@ -1370,27 +1401,27 @@ El programa devuelve la misma orden, así que $\mathcal{E}[P_{\mathrm{sim}}(o)] 
 
 **Caso de inducción:** $o = \texttt{Repetir}(k, o')$
 
-Como $t(o') < t(\texttt{Repetir}(k, o'))$, la Hipótesis es $\mathcal{E}[P_{\mathrm{sim}}(o')] = \mathcal{E}[o']$. Hay que probar 
-$\mathcal{E}[p_{\mathrm{sim}}(\texttt{Repetir}(k, o'))] = \mathcal{E}[o']^{k}$. El programa distingue cuatro casos:
+Como $t(o') < t(\texttt{Repetir}(k, o'))$, la Hipótesis es $\mathcal{E}[P_{\mathrm{sim}}(o')] = \mathcal{E}[o']$. Hay que probar
+$\mathcal{E}[P_{\mathrm{sim}}(\texttt{Repetir}(k, o'))] = \mathcal{E}[o']^{k}$. El programa distingue cuatro casos:
 
 * $k \leq 0$: devuelve `Secuencia(Nil)`. Por el Lema Z, $\mathcal{E}[o']^{k} = \mathrm{id} = \mathcal{E}[\texttt{Secuencia}(\texttt{Nil})]$
 
 * $k = 1$: devuelve $P_{\mathrm{sim}}(o')$. Por la Hipótesis, $\mathcal{E}[P_{\mathrm{sim}}(o')] =\mathcal{E}[o']^{1}$.
 
 * $k \geq 2$ y $P_{\mathrm{sim}}(o') = \texttt{Secuencia}(\texttt{Nil})$: devuelve `Secuencia(Nil)`. Por la HI, $\mathcal{E}[o'] = \mathcal{E}[\texttt{Secuencia}(\texttt{Nil})] =\mathrm{id}$,
-y por el Lema Z (numeral 4), $\mathcal{E}[o']^{k} =\mathrm{id}$.
+  y por el Lema Z (numeral 4), $\mathcal{E}[o']^{k} =\mathrm{id}$.
 
 * $k \geq 2$ y $P_{\mathrm{sim}}(o')$ es otra orden: devuelve $\texttt{Repetir}(k, P_{\mathrm{sim}}(o'))$, y
 
 ```math
-\mathcal{E}[\texttt{Repetir}(k, P_{\mathrm{sim}}(o'))] \mathcal{E}[P_{\mathrm{sim}}(o')]^{k} = \mathcal{E}[o']^{k}
+\mathcal{E}[\texttt{Repetir}(k, P_{\mathrm{sim}}(o'))] = \mathcal{E}[P_{\mathrm{sim}}(o')]^{k} = \mathcal{E}[o']^{k}
 ```
 
 Por la ecuación de `Repetir` y la Hipótesis.
 
 **Caso de inducción:** $o = \texttt{Secuencia}(ps)$
 
-Sea $\mathit{listaSimplificada} = \texttt{SimplificarLista}(ps)$. Como $\mu(ps) = (T(ps), 1) < (1 + T(ps), 0) = \mu(o)$, 
+Sea $\mathit{listaSimplificada} = \texttt{simplificarLista}(ps)$. Como $\mu(ps) = (T(ps), 1) < (1 + T(ps), 0) = \mu(o)$, 
 la segunda afirmación es Hipótesis y da $\mathcal{E}[\texttt{Secuencia}(\mathit{listaSimplificada})] = \mathcal{E}[\texttt{Secuencia}(ps)]$. 
 
 El programa mira $\mathit{listaSimplificada}$:
@@ -1425,34 +1456,28 @@ $\mathcal{E}[\mathit{cabeza}] = \mathrm{id}$, así que $\mathcal{E}[\texttt{Secu
 * $\mathit{cabezaSimplificada} = \texttt{Avanzar}(n)$ y $\mathit{colaSimplificada} = \texttt{Avanzar}(m) :: \mathit{siguiente}$: devuelve `simplificarLista(Avanzar(n + m) :: siguiente)`.
 Esta lista tiene medida menor que $ps$ (última fila de la tabla), así que por la hipótesis su resultado equivale a ella:
 
-
 $$
 \begin{aligned}
 \mathcal{E}[\texttt{Secuencia}(\texttt{Avanzar}(n+m) :: \mathit{siguiente})]
-&= \mathcal{E}[\texttt{Secuencia}(\mathit{siguiente})] \circ \mathcal{E}[\texttt{Avanzar}(n+m)] \\
-&= \mathcal{E}[\texttt{Secuencia}(\mathit{siguiente})] \circ \mathcal{E}[\texttt{Avanzar}(m)] \circ \mathcal{E}[\texttt{Avanzar}(n)] \\
-&= \mathcal{E}[\texttt{Secuencia}(\mathit{colaSimplificada})] \circ \mathcal{E}[\mathit{cabezaSimplificada}] \\
-&= \mathcal{E}[\texttt{Secuencia}(\mathit{cola})] \circ \mathcal{E}[\mathit{cabeza}]
-\end{aligned}
+ &= \mathcal{E}[\texttt{Secuencia}(\mathit{siguiente})]\circ \mathcal{E}[\texttt{Avanzar}(n+m)] \\
+ &= \mathcal{E}[\texttt{Secuencia}(\mathit{siguiente})]\circ \mathcal{E}[\texttt{Avanzar}(m)] \circ \mathcal{E}[\texttt{Avanzar}(n)] \\
+ &= \mathcal{E}[\texttt{Secuencia}(\mathit{colaSimplificada})] \circ \mathcal{E}[\mathit{cabezaSimplificada}] \\
+ &= \mathcal{E}[\texttt{Secuencia}(\mathit{cola})] \circ \mathcal{E}[\mathit{cabeza}] 
+ \end{aligned} 
 $$
+La primera igualdad es la ecuación de `Secuencia`; la segunda, el Lema A; la tercera, ecuación de `Secuencia` leída al revés;
+la cuarta, las Hipótesis.
 
-La primera igualdad es la ecuación de `Secuencia`; la segunda, el Lema A; la tercera, la ecuación de `Secuencia` leída al revés; y la cuarta, las hipótesis inductivas.
+* $\mathit{cabezaSimplificada} =\texttt{Avanzar}(n)$ y $ \mathit{colaSimplificada}$ no empieza con `Avanzar`: devuelve `Avanzar(n) :: colaSimplificada`.
+* Cualquier otra `cabezaSimplificada` : devuelve `cabezaSimplificada :: colaSimplificada`.
 
-- `cabezaSimplificada = Avanzar(n)` y $\mathit{colaSimplificada}$ no empieza con `Avanzar`: devuelve `Avanzar(n) :: colaSimplificada`.
-- Cualquier otra `cabezaSimplificada`: devuelve `cabezaSimplificada :: colaSimplificada`.
-
-En los dos últimos casos, por la ecuación de `Secuencia` y la hipótesis inductiva (HI):
+En los dos últimos, por la ecuación de `Secuencia` y HI:
 
 $$
-\begin{aligned}
-\mathcal{E}[\texttt{Secuencia}(\mathit{cabezaSimplificada} :: \mathit{colaSimplificada})]
-&= \mathcal{E}[\texttt{Secuencia}(\mathit{colaSimplificada})] \circ \mathcal{E}[\mathit{cabezaSimplificada}] \\
-&= \mathcal{E}[\texttt{Secuencia}(\mathit{cola})] \circ \mathcal{E}[\mathit{cabeza}]
-\end{aligned}
+\mathcal{E}[\texttt{Secuencia}(\mathit{cabezaSimplificada} :: \mathit{colaSimplificada})] = \mathcal{E}[\texttt{Secuencia}(\mathit{colaSimplificada})] = \circ \mathcal{E}[\mathit{cabezaSimplificada}] = 
+\mathcal{E}[\texttt{Secuencia}(\mathit{cola})] \mathcal{E}[\mathit{cabeza}]
 $$
-
 Los cuatro caminos cubren todas las posibilidades de `cabezaSimplificada` y `colaSimplificada`.
-
 
 Concluimos por inducción bien fundada, sobre la medida $\mu$ que baja en cada llamada recursiva, que:
 
@@ -1467,4 +1492,4 @@ simplificarse más.
 Un programa iterativo se argumenta definiendo un estado de la iteración, su estado inicial, su estado final, una invariante y la transformación
 que pasa de un estado al siguiente.
 `aplicarA`, `transformar` y `simplificar` son recursivos: procesan una lista o una orden con llamadas sobre la cola o sobre subórdenes, y no hay estado de iteración ni invariante de ciclo. Por eso su corrección
-se argumenta con el método recursivo de la sección 1 (inducción estructural o bien fundada).
+se argumenta con el método recursivo de la sección Argumentar la corrección de programas recursivos.
