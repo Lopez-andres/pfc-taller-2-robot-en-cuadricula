@@ -948,7 +948,7 @@ aplicarA(List(inicial, Estado(5, 5, Sur)), Avanzar(2))
  // A1: Cabeza = Estado(0, 0, Norte), ejecutar(cabeza, Avanzar(2)) = Estado(0, 2, Norte). Llamada con la cola:
  aplicarA(List(Estado(5, 5, Sur)), Avanzar(2)) // A2
  
- // A2: cabeza = Estado(5, 5, Sur), ejecutar(cabeza, Avanzar(2)) = Estado(5, 5, Sur). Llamada con la cola: 
+ // A2: cabeza = Estado(5, 5, Sur), ejecutar(cabeza, Avanzar(2)) = Estado(5, 3, Sur). Llamada con la cola: 
  // aplicarA(Nil, Avanzar(2))  //A3
 ```
  Cada llamada ejecuta la orden sobre la cabeza, y el `::` queda pendiente hasta que la llamada con la cola termine.
@@ -1002,8 +1002,8 @@ Con la lista vacía el resultado es `Nil`: `aplicarA(Nil, o)` cae directo en el 
 
 `aplicarA` **no** es de cola: después de `aplicarA(cola, o)` todavía hay que hacer el `::`, así que cada
 llamada queda esperando en la pila hasta que la siguiente termine. En el ejemplo A1 y A2 están esperando mientras
-A3 devuelve `Nil`. Por eso no lleva `@tailrec`; en `ejecutarLista`, en cambio, la llamada recursiva es lo último que 
-se hace y sí está anotada.
+A3 devuelve `Nil`. Por eso no lleva `@tailrec`; en `recorre` y `repite`, en cambio, la llamada recursiva es lo último que 
+se hace.
 
 ## 1.6 Diagrama de llamadas de pila
 
