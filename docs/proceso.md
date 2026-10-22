@@ -124,10 +124,9 @@ def ejecutar(e: Estado, o: Orden): Estado = o match {
   case Repetir(veces, orden) =>
     @annotation.tailrec
     def repetir(restantes: Int, actual: Estado): Estado =
-      if (restantes <= 0) {
-        actual
-      } else {
-        repetir(restantes - 1, ejecutar(actual, orden))
+      restantes match {
+        case r if r <= 0 => actual
+        case _           => repetir(restantes - 1, ejecutar(actual, orden))
       }
 
     repetir(veces, e)
@@ -216,24 +215,23 @@ El robot está mirando al $Este$. Al girar a la izquierda, comienza a mirar al $
 ### Caso 3: Repetir(veces, orden)
 
 Este permite ejecutar varias veces una misma instrucción.
-Como se necesita recordar cuantas repeticiones falta y cual es su estado actual, se usa la función auxiliar $repetir$
+Como se necesita recordar cuántas repeticiones faltan y cuál es su estado actual, se usa la función auxiliar $repetir$
 
 ```Scala
   @annotation.tailrec
   def repetir(restantes: Int, actual: Estado): Estado =
-    if (restantes <= 0) {
-        actual
-  } else {
-    repetir(restantes - 1, ejecutar(actual, orden))
-  }
+    restantes match {
+      case r if r <= 0 => actual
+      case _           => repetir(restantes - 1, ejecutar(actual, orden))
+    }
 ```
 Se sabe que la función tiene los siguientes parámetros:
-- $restantes$: Índica cuantas repeticiones quedan pendientes
+- $restantes$: Indica cuántas repeticiones quedan pendientes
 - $actual$: Guarda el estado obtenido después de ejecutar las instrucciones anteriores
 
 Entonces:
 - Si $restantes$ es 0 o negativo, devuelve el estado actual, sin hacer ningún cambio u operación adicional.
-- Si no entonces primero se ejecuta la orden y después llama nuevamente a $repetir$ con una repetición menos
+- Si no, entonces primero se ejecuta la orden y después llama nuevamente a $repetir$ con una repetición menos
 
 La llamada $repetir(veces, e)$ inicia el proceso con la cantidad de repeticiones solicitadas y el estado
 recibido por $ejecutar$
@@ -256,7 +254,7 @@ Cuando $restantes$ llega a 0, devuelve Estado(7, 2, Este)
 ### Caso 4: Secuencia(ordenes)
 
 Se sabe que una secuencia permite ejecutar varias instrucciones en el orden que aparezcan en una lista,
-para recorrer las se usa la función auxiliar $recorre$
+para recorrerlas se usa la función auxiliar $recorre$
 
 ```Scala
 @annotation.tailrec
@@ -298,7 +296,7 @@ Al llegar a $Nil$, la función devuelve Estado(2, 5, Este)
 
 ## Seguimiento de las llamadas recursivas
 
-Para observar como trabajan juntas $Repetir$ y $Secuencia$, utilizamos una orden que contiene ambas estructuras
+Para observar cómo trabajan juntas $Repetir$ y $Secuencia$, utilizamos una orden que contiene ambas estructuras
 
 ```Scala
 val orden = Repetir(2, Secuencia(List(Avanzar(2), Girar(Derecha))))
@@ -329,11 +327,11 @@ Entonces:
 Estado(0, 0, Norte)
 // Se convierte en
 Estado(0, 2, Norte)
-// Despues ejecuta $Girar(Derecha)$
+// Después ejecuta Girar(Derecha)
 Estado(0, 2, Este)
 ```
 Entonces cuando llega a $Nil$, $recorre$ devuelve ese estado y la función
-$repetir$ continua con una repetición menos
+$repetir$ continúa con una repetición menos
 
 ```Scala
 repetir(1, Estado(0, 2, Este))
@@ -355,10 +353,10 @@ repetir(0, Estado(2, 2, Sur))
 ```
 
 #### Paso 4: Caso base y resultado
-Como $restantes$ es 0, la condición
+Como $restantes$ es 0, la guarda
 
 ```Scala
-if (restantes <= 0)
+case r if r <= 0 => actual
 ```
 Se cumple, entonces se devuelve el estado actual $Estado(2, 2, Sur)$
 
@@ -419,23 +417,23 @@ que se ejecuta en cada rama). La anotación $@annotation.tailrec$ permite que Sc
 El diagrama representa el recorrido de las llamadas, esto no significa que todas las llamadas de las funciones
 auxiliares deban guardarse en la memoria del computador
 
-Las órdenes internas pueden contener otras órdenes compuestas, por lo que $ejecutar$ puede volverl a
+Las órdenes internas pueden contener otras órdenes compuestas, por lo que $ejecutar$ puede volver a
 llamarse para procesarlas
 
 ## Terminación
 En $Repetir$, el número de repeticiones disminuye en cada llamada: $2 \Rightarrow 1 \Rightarrow 0$,
-y que cuando llega a 0 devuelve el estado actual. Si la cantidad inicial es cero o negativa, termina inmediatamente
+y cuando llega a 0 devuelve el estado actual. Si la cantidad inicial es cero o negativa, termina inmediatamente
 
-En $Secuencia$, la lista de ordenes pendientes se reduce al procesar su cabeza
+En $Secuencia$, la lista de órdenes pendientes se reduce al procesar su cabeza
 
 ```Scala
 List(Avanzar(2), Girar(Derecha))
 List(Girar(Derecha))
 Nil
 ```
-Y que cuando llega a $Nil$, devuelve el último resultado obtenido.
+Y cuando llega a $Nil$, devuelve el último resultado obtenido.
 
-Como las ordenes y sus listas internas son finitas y cada contador positivo disminuye,
+Como las órdenes y sus listas internas son finitas y cada contador positivo disminuye,
 la ejecución termina después de completar las instrucciones.
 
 ## Conclusión
@@ -458,7 +456,8 @@ En este punto, `cuadrado` es `Repetir(4, Secuencia(List(Avanzar(1), Girar(Derech
   def cuantasBasicas(o: Orden): Int = o match {
       case Avanzar(_) => 1
       case Girar(_) => 1
-      case Repetir(veces, orden) => if (veces <= 0) 0 else veces * cuantasBasicas(orden)
+      case Repetir(veces, _) if veces <= 0 => 0
+      case Repetir(veces, orden) => veces * cuantasBasicas(orden)
       case Secuencia(ordenes) => ordenes match {
         case Nil => 0
         case x :: xs => cuantasBasicas(x) + cuantasBasicas(Secuencia(xs))
@@ -713,11 +712,7 @@ El código que se uso para desarrollar la actividad es:
 ### Caso 1: Función $componer$
 
 Recibe 2 órdenes y devuelve una `Secuencia` que contiene ambas instrucciones,para que posteriormente $Secuencia$
-agrupa esa lista en un orden compuesto
-```Scala
-def componer(o1: Orden, o2: Orden): Orden =
-  Secuencia(List(o1, o2))
-```
+agrupa esa lista en una orden compuesta
 
 La expresión List(o1, o2) construye la lista que conserva el orden de las instrucciones
 Ejemplo:
@@ -753,32 +748,10 @@ Secuencia(List(Secuencia(Nil), Avanzar(4)))
 La orden vacía permanece dentro de la secuencia, porque $componer$ solamente agrupa las instrucciones
 y no realiza simplificaciones
 
-## Comprobación del resultado
-
-### Comprobación del resultado $componer$
-
-Se usa:
-
-```Scala
-ejecutar( inicial, componer(Girar(Derecha), Avanzar(3)))
-```
-
-Desde el Estado(0, 0, Norte), y el robot primero gira a la derecha y después avanza 3 unidades, dando como resultado:
-
-```Scala
-Estado(3, 0, Este)
-```
-Evidenciando mediante el ejemplo que la secuencia respeta el orden de sus instrucciones
-
-
 ### Caso 2: Función $rutina$
 
 Construye una orden compuesta que permite repetir una secuencia de avance y giro
 
-```Scala
-def rutina(pasos: Int)(giro: Sentido)(veces: Int): Orden =
-  Repetir(veces, componer(Avanzar(pasos), Girar(giro)))
-```
 Para construir el orden, el programa utiliza la función $componer$, desarrollada anteriormente
 
 Ejemplo:
@@ -787,7 +760,7 @@ rutina(2)(Derecha)(1)
 ```
 
 #### Paso 1: Construcción de las órdenes básicas
-Se usa los valores de $pasos$ y $giro$ para crear:
+Se usan los valores de $pasos$ y $giro$ para crear:
 ```Scala
 Avanzar(2)
 Girar(Derecha)
@@ -807,13 +780,13 @@ Secuencia(List(Avanzar(2), Girar(Derecha)))
 ```
 
 #### Paso 3: Construcción de la repetición
-Finalmente, el programa usa el parametro $veces$ para contruir:
+Finalmente, el programa usa el parámetro $veces$ para construir:
 
 ```Scala
 Repetir(1, Secuencia(List(Avanzar(2), Girar(Derecha))))
 ```
 
-Como la cantidad de repeticiones es 1, cuando se ejecute este orden, el robot realizará una avance y un giro
+Como la cantidad de repeticiones es 1, cuando se ejecute esta orden, el robot realizará un avance y un giro
 
 Si parte de Estado(0, 0, Norte), avanzará 2 unidades hacia el norte y después gira a la derecha,
 dando como resultado Estado(0, 2, Este)
@@ -831,7 +804,7 @@ Permitiendo que se pueda fijar algunos argumentos y obtener una función que rec
 ```Scala
 val cuadradoDe = rutina(1)(Derecha) _
 ```
-En esta expresión se establece los pasos y el sentido del giro, dejando pendiente únicamente el número de repeticiones,
+En esta expresión se establecen los pasos y el sentido del giro, dejando pendiente únicamente el número de repeticiones,
 luego se puede usar $cuadradoDe(4)$ y a función que se construye es:
 
 ```Scala
@@ -883,7 +856,7 @@ Estado(0, 0, Norte)
 El robot vuelve al estado inicial después de recorrer los 4 lados del cuadrado
 
 
-# parte 1. `AplicarA`
+## Parte 1. `aplicarA`
 
 ## 1.1 Definición del Algoritmo
 
@@ -898,7 +871,6 @@ El robot vuelve al estado inicial después de recorrer los 4 lados del cuadrado
 
     
 ```
-----
 * La función `aplicarA` recibe una lista de estados y orden `o`, y devuelve una lista con el estado que resulta de  
 ejecutar `o` sobre cada uno, en el mismo orden. Para ejecutar usa `ejecutar` del punto 2. Una lista vacía o tienen cabeza y 
 cola, así que `match` tiene dos casos.
@@ -984,7 +956,7 @@ aplicarA(Nil, Avanzar(2)) // A3 devuelve Nil
 | `(0, 0, Norte)` | `(Norte)` | `y` sube: 0 + 2| `(0, 2, Norte)` |
 | `(5, 5, Sur)`  | `(Sur)` | `y` baja: 5 - 2 | `(5, 3, Sur)` |
 
-## Ejemplo de uso con una orden compuesta
+## 1.5 Ejemplo de uso con una orden compuesta
 
 ```Scala
 val o = Secuencia(List(Avanzar(2), Girar(Derecha)))
@@ -998,14 +970,14 @@ aplicarA(List(Estado(1, 1, Este), Estado(3, 1, Oeste)), o)
 
 Con la lista vacía el resultado es `Nil`: `aplicarA(Nil, o)` cae directo en el caso base.
 
-## 1.5 Diferencia con recursión de cola
+## 1.6 Diferencia con recursión de cola
 
 `aplicarA` **no** es de cola: después de `aplicarA(cola, o)` todavía hay que hacer el `::`, así que cada
 llamada queda esperando en la pila hasta que la siguiente termine. En el ejemplo A1 y A2 están esperando mientras
 A3 devuelve `Nil`. Por eso no lleva `@tailrec`; en `recorre` y `repite`, en cambio, la llamada recursiva es lo último que 
 se hace.
 
-## 1.6 Diagrama de llamadas de pila
+## 1.7 Diagrama de llamadas de pila
 
 Las llamadas bajan hasta `Nil` (A3) y los resultados suben.
 
@@ -1054,7 +1026,7 @@ sequenceDiagram
         Secuencia(transformarLista(ordenes))
     }
 ```
-`transformar` recibe una orden ´o´ y una función `f` de órdenes. Devuelve un orden con la misma estructura, 
+`transformar` recibe una orden `o` y una función `f` de órdenes. Devuelve una orden con la misma estructura, 
 pero con cada orden básica (`Avanzar` o `Girar`) reemplazada por lo que devuelva `f`. 
 Como `f` es un parámetro, `transformar` es una función de alto orden. `transformarLista` es una función auxiliar dentro 
 de `transformar`.
@@ -1071,7 +1043,7 @@ de `transformar`.
       case Girar(_) =>
         f(o)
 ```
-Las órdenes básicas ´Avanzar'y ´Girar` son las únicas sobre las que se aplica la función `f`. Las órdenes compuestas como `Repetir` y `Secuencia` no la aplican directamente, sino que la transmiten recursivamente a las órdenes que contienen, hasta llegar a una orden básica.
+Las órdenes básicas `Avanzar` y `Girar` son las únicas sobre las que se aplica la función `f`. Las órdenes compuestas como `Repetir` y `Secuencia` no la aplican directamente, sino que la transmiten recursivamente a las órdenes que contienen, hasta llegar a una orden básica.
 
 ### Caso recursivo: `Repetir`
 
@@ -1085,32 +1057,16 @@ Se conserva `veces` y se transforma la orden de adentro. La forma del `Repetir` 
 ### Caso recursivo: `Secuencia`
 
 ```Scala
-case Secuencia(ordenes) =>
-```
-Órdenes es la lista de órdenes de la secuencia. La función auxiliar `transformarLista` la recorre.
-
-```Scala
-   case Nil =>
-      Nil
-```
-Una lista vacía no tiene nada que transformar. Aquí termina la recursión.
-
-`simplificar` es la orden de adentro ya simplificada, si no quedó nada (`Secuencia(Nil)`), la repetición tampoco hace nada;
-si no, se conserva  `Repetir` con `simplificada`.
-
-### Caso recursivo: Secuencia
-
-```Scala
  case Secuencia(ordenes) =>
 ```
 
-`ordenes` es la lista de órdenes de la secuencia. La función auxiliar `simplificarLista` la recorre.
+`ordenes` es la lista de órdenes de la secuencia. La función auxiliar `transformarLista` la recorre.
 
 ```Scala
 case Nil =>
 Nil
 ```
-Una lista vacía no tiene nada que simplificar. Aquí termina la recursión.
+Una lista vacía no tiene nada que transformar. Aquí termina la recursión.
 
 ```Scala
            case cabeza :: cola =>
@@ -1129,17 +1085,18 @@ al `match` de `transformar`.
 ```
 Con la lista ya transformada se arma de nuevo la `Secuencia`.
 
-## Seguimiento de las llamadas recursivas
+## 2.3 Seguimiento de las llamadas recursivas
 
-Ejemplo del enunciado. La función que se pasa duplicada a cada avance y deja lo demás igual; en la traza la llamamos `f`:
+Ejemplo del enunciado. La función que duplica cada avance y deja lo demás igual; en la traza la llamamos `f`:
 
 
 ```Scala
   val cuadrado = Repetir(4, Secuencia(List(Avanzar(1), Girar(Derecha))))
-   transformar(cuadrado, {
-      case Avanzar(n) => Avanzar(2 * n)
-      case otra    => otra
-   })
+  val f: Orden => Orden = {
+    case Avanzar(n) => Avanzar(2 * n)
+    case otra       => otra
+  }
+  transformar(cuadrado, f)
 
 ```
 ### Paso 1: Llamada inicial
@@ -1210,17 +1167,17 @@ Desde `(0, 0, Norte)`. El cuadrado original tiene lado 1 y el transformado, lado
 | Orden original | Estado | Orden transformada | Estado | 
 |---|---|---|---|
 | `Avanzar(1)` | `(0, 1, Norte)` | `Avanzar(2)`| `(0, 2, Norte)` |
-| `Girar(D)`   | `(0, 1, Este)` | `Girar(D)` | `(0, 2, Este)` |
+| `Girar(Derecha)`   | `(0, 1, Este)` | `Girar(Derecha)` | `(0, 2, Este)` |
 | `Avanzar(1)` | `(1, 1, Este)` | `Avanzar(2)`| `(2, 2, Este)` |
-| `Girar(D)` | `(1, 1, Sur)` | `Girar(D)` | `(2, 2, Sur)` |
+| `Girar(Derecha)` | `(1, 1, Sur)` | `Girar(Derecha)` | `(2, 2, Sur)` |
 | `Avanzar(1)` | `(1, 0, Sur)` | `Avanzar(2)` | `(2, 0, Sur)` |
-| `Girar(D)` | `(1, 0, Oeste)` | `Girar(D)` | `(2, 0, Oeste)` |
+| `Girar(Derecha)` | `(1, 0, Oeste)` | `Girar(Derecha)` | `(2, 0, Oeste)` |
 | `Avanzar(1)` | `(0, 0, Oeste)` | `Avanzar(2)` | `(0, 0, Oeste)` |
-| `Girar(D)` | `(0, 0, Norte)` | `Girar(D)` | `(0, 0, Norte)` |
+| `Girar(Derecha)` | `(0, 0, Norte)` | `Girar(Derecha)` | `(0, 0, Norte)` |
 
 Las dos órdenes terminan en `(0, 0, Norte)`: dibujan un cuadrado y el robot vuelve al punto de partida.
 
-## Ejemplo de uso
+## 2.5 Ejemplo de uso
 
 ```Scala
 transformar(Avanzar(1), f) //Avanzar(2)
@@ -1231,13 +1188,13 @@ transformar(Repetir(4, Secuencia(Nil)), f) //Repetir(4, Secuencia(Nil))
 Una secuencia vacía sigue vacía, porque `transformarLista(Nil)` devuelve `Nil` y no se llama a `f`.  
 
 
-## Diferencia con recursión de cola
+## 2.6 Diferencia con recursión de cola
 
 * `transformarLista` **no** es de cola: después de `transformarLista(cola)` todavía hay que hacer el `::`, así que las llamadas
 quedan pendientes en la pila (ejemplo, L1 y L2 esperan a L3). Además, `transformar` y `transformarLista` se llaman entre sí:
 `transformarLista` llama a `transformar` para cada cabeza, y a su vez `transformar` llama a `transformarLista` en el caso `Secuencia`.
 
-## Diagrama de llamados de pila
+## 2.7 Diagrama de llamados de pila
 
 Las llamadas bajan hasta `Nil` (L3) y los resultados suben.  `f` solo se aplica en T3 y T4.
 
@@ -1267,8 +1224,8 @@ sequenceDiagram
    
 ```
 El diagrama muestra como $componer$ y $rutina$ construye órdenes compuestas mientras que en $aplicarA$ recorre una
-lista de estados y ejecuta el orden de sobre cada uno.
-Por su parte $transformar$ recorre as órdenes compuestas, modifica las instrucciones básicas y reconstruye
+lista de estados y ejecuta la orden sobre cada uno.
+Por su parte $transformar$ recorre las órdenes compuestas, modifica las instrucciones básicas y reconstruye
 el resultado.
 
 En $aplicarA$ y $transformarLista$ no se usa @annotation.tailrec, porque después de las llamadas recursivas
@@ -1285,8 +1242,9 @@ volver de la recursión.
 
 
 
-# Punto 5. `simplificar`.
+# Punto 5. `simplificar`
 
+## Definición del Algoritmo
 
 ```Scala
    /** Una orden equivalente más corta, con las reglas del enunciado. */
@@ -1301,21 +1259,21 @@ volver de la recursión.
     case Girar(sentido) =>
       Girar(sentido)
 
+    case Repetir(veces, _) if veces <= 0 =>
+      Secuencia(Nil)
+
+    case Repetir(veces, orden) if veces == 1 =>
+      simplificar(orden)
+
     case Repetir(veces, orden) =>
-      if (veces <= 0) {
-        Secuencia(Nil)
-      } else if (veces == 1) {
-        simplificar(orden)
-      } else {
-        val simplificada = simplificar(orden)
+      val simplificada = simplificar(orden)
 
-        simplificada match {
-          case Secuencia(Nil) =>
-            Secuencia(Nil)
+      simplificada match {
+        case Secuencia(Nil) =>
+          Secuencia(Nil)
 
-          case _ =>
-            Repetir(veces, simplificada)
-        }
+        case _ =>
+          Repetir(veces, simplificada)
       }
     case Secuencia(ordenes) =>
 
@@ -1363,7 +1321,6 @@ volver de la recursión.
     }
     
 ```
-----
   * La función `simplificar` recibe una orden `o` y devuelve otra orden **equivalente**: desde el mismo estado, las
   dos dejan al robot en el mismo estado. Es más corta cuando se puede y queda igual si no hay nada que simplificar. 
   
@@ -1392,32 +1349,31 @@ Girar(sentido)
 ### Caso recursivo: `Repetir`
 
 ```Scala
- if (veces <= 0) {
-        Secuencia(Nil)
-      }
+case Repetir(veces, _) if veces <= 0 =>
+  Secuencia(Nil)
 ```
 Repetir cero o menos veces no hace nada.  Regla 1 del enunciado `Repetir(0,_)`, pero el código trata todos los casos
-con `veces <= 0`, porque `ejecutar` también deja igual al robot con repeticiones negativas.
+con `veces <= 0`, porque `ejecutar` también deja igual al robot con repeticiones negativas. La guarda va antes que el
+caso general, para que atrape primero estas repeticiones.
 
 ```Scala
-else if (veces == 1) {
-simplificar(orden)
-}
+case Repetir(veces, orden) if veces == 1 =>
+  simplificar(orden)
 ```
 Repetir una vez es la orden sola.
 
 ```Scala
-} else {
-        val simplificada = simplificar(orden)
-        simplificada match {
-          case Secuencia(Nil) =>
-            Secuencia(Nil)
-          case _ =>
-            Repetir(veces, simplificada)
-        }
-      }
+case Repetir(veces, orden) =>
+  val simplificada = simplificar(orden)
+  simplificada match {
+    case Secuencia(Nil) =>
+      Secuencia(Nil)
+    case _ =>
+      Repetir(veces, simplificada)
+  }
 ```
 
+Este último caso no lleva guarda, así queda como caso general y el `match` sobre `Repetir` resulta exhaustivo.
 `simplificada` es la orden de adentro ya simplificada, si no quedó nada (`Secuencia(Nil)`), la repetición tampoco hace nada; 
 si no, se conserva  `Repetir` con `simplificada`.
 
@@ -1552,7 +1508,7 @@ Aquí termina la bajada: hay cuatro llamadas en la pila (L1 a L4). Desde aquí s
 //L4: cabezaSimplificada = Girar(Derecha) --> es `otra`
 //  Girar(Derecha) :: Nil = List(Girar(Derecha))
 
-//L3: cabezaSimplificada = Secuencia(Nil) (porque simplificar(Avanza(0)) = Secuencia(Nil))
+//L3: cabezaSimplificada = Secuencia(Nil) (porque simplificar(Avanzar(0)) = Secuencia(Nil))
 //  se quita, devuelve colaSimplificada = List(Girar(Derecha))
 
 //L2: cabezaSimplificada = Avanzar(3), colaSimplificada = List(Girar(Derecha)) no empieza con Avanzar.
@@ -1585,7 +1541,7 @@ La llamada extra (L6) revisa la lista nueva, por si el avance sumado se pudiera 
 
 ```Scala
 //L1 devuelve lo de L6: List(Avanzar(5), Girar(Derecha))
-// simplificar: listaSimplificada tiene dos elementos (case_) -> Secuencia(listaSimplificada)
+// simplificar: listaSimplificada tiene dos elementos (`case _`) -> Secuencia(listaSimplificada)
 Secuencia(List(Avanzar(5), Girar(Derecha)))
 ```
 
@@ -1602,7 +1558,7 @@ Desde `(0, 0, Norte)`:
 | `Avanzar(2)` | `(0, 2, Norte)` | | |
 | `Avanzar(3)` | `(0, 5, Norte)` | `Avanzar(5)` | `(0, 5, Norte)` |
 | `Avanzar(0)` | `(0, 5, Norte)` | | |
-| `Girar(D)`   | `(0, 5, Este)` | `Girar(D)` | `(0, 5, Este)` |
+| `Girar(Derecha)`   | `(0, 5, Este)` | `Girar(Derecha)` | `(0, 5, Este)` |
 
 Las dos órdenes terminan en `(0, 5, Este)`.
 
@@ -1640,7 +1596,7 @@ y como no quedó `Secuencia(Nil)` se conserva el `Repetir`. Las dos órdenes lle
 ## Diferencia con recursión de cola
 
 * `simplificarLista` **no** es de cola: después de `simplificarLista(cola)` todavía decide qué hacer con `cabezaSimplificada`. Por 
-eso las llamadas quedan pendientes en la pila: en el ejemplo L1 a L5 están esperando a la vez.
+eso las llamadas quedan pendientes en la pila: en el ejemplo L1 a L4 están esperando a la vez.
 * Además, al juntar dos avances se llama de nuevo a `simplificarLista`, y esa llamada vuelve a calcular su propio `colaSimplificada`,
 que también está pendiente (como L6 a L8).
 
@@ -1701,7 +1657,7 @@ flowchart TD
     I-->S
     
 ```
-##  Conclusión
+## Conclusión
 
 `simplificar` quita las órdenes que no hacen nada y junta los avances seguidos, usando recursión y `match`.
 La auxiliar `simplificarLista` no es de cola: decide sobre cada orden al volver de la recursión. El resultado es 
