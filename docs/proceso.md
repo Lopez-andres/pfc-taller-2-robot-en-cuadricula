@@ -838,8 +838,8 @@ luego se puede usar $cuadradoDe(4)$ y a función que se construye es:
 Repetir(4, Secuencia(List(Avanzar(1), Girar(Derecha))))
 ```
 Este orden permite recorrer los 4 lados de un cuadrado cuando se ejecuta desde el estado inicial.
-Es importante mencionar que $rutina$ solamente construye una instrucción. Los movimientos se realizan después,
-cuando el orden se entrega a $ejecutar$
+Es importante mencionar que `rutina` solamente construye una instrucción. Los movimientos se realizan después,
+cuando el orden se entrega a `ejecutar`
 
 ## Comprobación del resultado
 
@@ -945,7 +945,7 @@ aplicarA(List(inicial, Estado(5, 5, Sur)), Avanzar(2))
 ### Paso 2: Bajan las llamadas
 
 ```Scala
- // A1: Cabeza = Estado(0, 0, Norte), ejecutar(cabeza, Avanzar(2)) = Estado(0, 2, Norte). Llamada con la cola:
+ // A1: cabeza = Estado(0, 0, Norte), ejecutar(cabeza, Avanzar(2)) = Estado(0, 2, Norte). Llamada con la cola:
  aplicarA(List(Estado(5, 5, Sur)), Avanzar(2)) // A2
  
  // A2: cabeza = Estado(5, 5, Sur), ejecutar(cabeza, Avanzar(2)) = Estado(5, 3, Sur). Llamada con la cola: 
@@ -982,7 +982,7 @@ aplicarA(Nil, Avanzar(2)) // A3 devuelve Nil
 | Estado de partida | Mira | Efecto de `Avanzar(2)`| Estado final | 
 |---|---|---|---|
 | `(0, 0, Norte)` | `(Norte)` | `y` sube: 0 + 2| `(0, 2, Norte)` |
-| `(5, 5, Sur)`  | `Sur` | `y` baja: 5 - 2 | `(5, 3, Sur)` |
+| `(5, 5, Sur)`  | `(Sur)` | `y` baja: 5 - 2 | `(5, 3, Sur)` |
 
 ## Ejemplo de uso con una orden compuesta
 
@@ -1397,7 +1397,7 @@ Girar(sentido)
       }
 ```
 Repetir cero o menos veces no hace nada.  Regla 1 del enunciado `Repetir(0,_)`, pero el código trata todos los casos
-con `veces <=0`, porque `ejecutar` también deja igual al robot con repeticiones negativas.
+con `veces <= 0`, porque `ejecutar` también deja igual al robot con repeticiones negativas.
 
 ```Scala
 else if (veces == 1) {
@@ -1642,7 +1642,7 @@ y como no quedó `Secuencia(Nil)` se conserva el `Repetir`. Las dos órdenes lle
 * `simplificarLista` **no** es de cola: después de `simplificarLista(cola)` todavía decide qué hacer con `cabezaSimplificada`. Por 
 eso las llamadas quedan pendientes en la pila: en el ejemplo L1 a L5 están esperando a la vez.
 * Además, al juntar dos avances se llama de nuevo a `simplificarLista`, y esa llamada vuelve a calcular su propio `colaSimplificada`,
-que también está pendiente (como L6 a L8)
+que también está pendiente (como L6 a L8).
 
 ## Diagrama de llamados de pila 
 
