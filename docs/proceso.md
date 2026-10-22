@@ -1082,7 +1082,7 @@ Las órdenes básicas ´Avanzar'y ´Girar` son las únicas sobre las que se apli
 ```
 Se conserva `veces` y se transforma la orden de adentro. La forma del `Repetir` no cambia.
 
-### Caso recursivo: `Secuencial`
+### Caso recursivo: `Secuencia`
 
 ```Scala
 case Secuencia(ordenes) =>
