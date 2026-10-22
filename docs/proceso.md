@@ -1071,8 +1071,7 @@ de `transformar`.
       case Girar(_) =>
         f(o)
 ```
-Las órdenes básicas se entregan a `f`. Es el **único lugar** donde se usa `f`: porque ni `Repetir`
-ni `Secuencia` se la pasan.
+Las órdenes básicas ´Avanzar'y ´Girar` son las únicas sobre las que se aplica la función `f`. Las órdenes compuestas como `Repetir` y `Secuencia` no la aplican directamente, sino que la transmiten recursivamente a las órdenes que contienen, hasta llegar a una orden básica.
 
 ### Caso recursivo: `Repetir`
 
@@ -1530,7 +1529,7 @@ simplificarLista(List(Avanzar(3), Avanzar(0), Girar(Derecha))) // L2
 // L2: cabeza = Avanzar(3). Llama con la cola:
 simplificarLista(List(Avanzar(0), Girar(Derecha))) //L3
 
-//L3: cabeza= Secuencia(Nil). Llama con la cola: 
+//L3: cabeza = Avanzar(0)  Llama con la cola: 
 simplificarLista(List(Girar(Derecha))) //L4
 
 //L4: cabeza = Girar(Derecha). Llama con la cola:
@@ -1568,17 +1567,19 @@ Aquí termina la bajada: hay cuatro llamadas en la pila (L1 a L4). Desde aquí s
 //  se juntan: Avanzar(2 + 3) = Avanzar(5), y se vuelve a llamar:
 simplificarLista(List(Avanzar(5), Girar(Derecha))) //L6
 
-//L6: cabeza = Avanzar(5). Llama con la cola:
-simplificarLista(List(Girar(Derecha)))
-//L7: cabeza = Girar(Derecha). Llama con la cola:
-simplificarLista(Nil)
+//L6: cabeza = Avanzar(5). Llama con la cola:  
+simplificarLista(List(Girar(Derecha)))  //L7
 
+//L7: cabeza = Girar(Derecha). Llama con la cola:
+simplificarLista(Nil)                              //L8
+
+//L8 devuelve Nil
 //L7: Girar(Derecha) :: Nil = List(Girar(Derecha))
 //L6: Avanzar(5) no se junta con Girar -> Avanzar(5) :: List(Girar(Derecha)) 
 //  = List(Avanzar(5), Girar(Derecha))
 
 ```
-La llamada extra (L6) revisa la lista nueva, por si el avance sumado se pudiera juntar con otro o valiera cera.
+La llamada extra (L6) revisa la lista nueva, por si el avance sumado se pudiera juntar con otro o valiera cero.
 
 ### Paso 6: Resultado final 
 
