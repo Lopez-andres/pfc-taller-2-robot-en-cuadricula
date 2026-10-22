@@ -31,7 +31,6 @@ class RobotCuadricula {
   // Punto 2 -------------------------------------------------------------------
 
   /** El estado que resulta de aplicarle la orden al estado dado. */
-  /** El estado que resulta de aplicarle la orden al estado dado. */
 
   // Recibe un estado y una orden, y devuelve el nuevo estado
   def ejecutar(e: Estado, o: Orden): Estado = o match{
@@ -54,15 +53,11 @@ class RobotCuadricula {
       @annotation.tailrec
       // Función auxiliar que guarda las repeticiones pendientes
       // y el estado actualizado después de cada ejecución
-      def repetir(restantes:Int, actual: Estado): Estado = {
-        // Caso base: Si no quedan repeticiones, devuelve el estado actual
-        if(restantes <= 0){
-          actual
-        }
-        // Ejecuta la orden, actualiza el estado y resta una repetición
-        else{
-          repetir(restantes -1, ejecutar(actual, orden))
-        }
+      def repetir(restantes: Int, actual: Estado): Estado = restantes match {
+        // Caso con guarda: Si no quedan repeticiones, devuelve el estado actual
+        case r if r <= 0 => actual
+        // Caso general: Ejecuta la orden, actualiza el estado y resta una repetición
+        case _ => repetir(restantes - 1, ejecutar(actual, orden))
       }
       // Comienza con las repeticiones indicadas y el estado inicial
       repetir(veces,e)
@@ -78,7 +73,7 @@ class RobotCuadricula {
           // Caso base: Cuando la lista esta vacía, termina
         case Nil => actual
       }
-      // Comienza el recorrido con lalista y el estado inicial
+      // Comienza el recorrido con la lista y el estado inicial
       recorre(orden,e)
 
   }
@@ -89,7 +84,8 @@ class RobotCuadricula {
   def cuantasBasicas(o: Orden): Int = o match {
       case Avanzar(_) => 1
       case Girar(_) => 1
-      case Repetir(veces, orden) => if (veces <= 0) 0 else veces * cuantasBasicas(orden)
+      case Repetir(veces, _) if veces <= 0 => 0
+      case Repetir(veces, orden) => veces * cuantasBasicas(orden)
       case Secuencia(ordenes) => ordenes match {
         case Nil => 0
         case x :: xs => cuantasBasicas(x) + cuantasBasicas(Secuencia(xs))
@@ -167,21 +163,21 @@ class RobotCuadricula {
     case Girar(sentido) =>
       Girar(sentido)
 
+    case Repetir(veces, _) if veces <= 0 =>
+      Secuencia(Nil)
+
+    case Repetir(veces, orden) if veces == 1 =>
+      simplificar(orden)
+
     case Repetir(veces, orden) =>
-      if (veces <= 0) {
-        Secuencia(Nil)
-      } else if (veces == 1) {
-        simplificar(orden)
-      } else {
-        val simplificada = simplificar(orden)
+      val simplificada = simplificar(orden)
 
-        simplificada match {
-          case Secuencia(Nil) =>
-            Secuencia(Nil)
+      simplificada match {
+        case Secuencia(Nil) =>
+          Secuencia(Nil)
 
-          case _ =>
-            Repetir(veces, simplificada)
-        }
+        case _ =>
+          Repetir(veces, simplificada)
       }
     case Secuencia(ordenes) =>
 

@@ -94,14 +94,14 @@ En las 8 parejas $P_{\text{girar}}(d,s) = g(d,s)$.
 
 Las 8 parejas de $\text{Direccion} \times \text{Sentido}$ cumplen $P_{\text{girar}}(d,s) = g(d,s)$. Por lo tanto, `girar` es correcta respecto a su especificación.
 
-## Punto 2: Aplicación del orden a los estados
+## Punto 2. Aplicación del orden a los estados
 
 ### Especificación
 La función `ejecutar` recibe el estado actual y una orden. Su objetivo es devolver un nuevo estado después de realizar la instrucción, sin que esta modifique su estado
 original.
 
 El estado del robot se ve representado mediante: $e = (x, y, d)$
-- $x$ y $y$: Representa su posición
+- $x$ y $y$: Representan su posición
 - $d$: Es la dirección hacia la que mira
 
 Sea $E(e, o)$ la función que representa el resultado esperado de ejecutar una orden
@@ -126,9 +126,20 @@ $E((x, y, d), Girar(s)) = (x, y, g(d, s))$
 - `s`: Sentido del giro (derecha o izquierda)
 
 La función $g(d, s)$ representa la función `girar` que se explicó en el punto 1. Como tal
-permite saber hacia que dirección queda mirando el robot después de girar a la derecha o a la izquierda
+permite saber hacia qué dirección queda mirando el robot después de girar a la derecha o a la izquierda
 
-Cuando una orden contiene otras órdenes, el robot las ejecuta una por una, siguiendo el orden establecido
+Cuando una orden contiene otras órdenes, el robot las ejecuta una por una, siguiendo el orden establecido.
+Esto se expresa en $E$ para `Repetir` y `Secuencia`:
+
+$E(e, \texttt{Repetir}(k, o)) =$
+- $e$ si $k \leq 0$
+- $E(E(e, o), \texttt{Repetir}(k - 1, o))$ si $k > 0$
+
+$E(e, \texttt{Secuencia}(\text{List}(o_1, \ldots, o_n))) =$
+- $e$ si $n = 0$
+- $E(E(e, o_1), \texttt{Secuencia}(\text{List}(o_2, \ldots, o_n)))$ si $n \geq 1$
+
+En ambos casos la orden interna se ejecuta sobre el estado que dejó la anterior.
 
 ### Algoritmo
 
@@ -153,10 +164,9 @@ def ejecutar(e: Estado, o: Orden): Estado = o match {
   case Repetir(veces, orden) =>
     @annotation.tailrec
     def repetir(restantes: Int, actual: Estado): Estado =
-      if (restantes <= 0) {
-        actual
-      } else {
-        repetir(restantes - 1, ejecutar(actual, orden))
+      restantes match {
+        case r if r <= 0 => actual
+        case _           => repetir(restantes - 1, ejecutar(actual, orden))
       }
 
     repetir(veces, e)
@@ -194,19 +204,19 @@ programa debe ser igual al resultado esperado"
 - $E(e, o)$: Resultado esperado según las reglas del ejercicio
 
 ### Método: Inducción Estructural
-Para comprobar que la función `ejecutar` funciona correctamente, se revisa, los 4 tipos de órdenes que puede recibir el robot: `Avanzar, Girar, Repetir y Secuencia`.
+Para comprobar que la función `ejecutar` funciona correctamente, se revisan los 4 tipos de órdenes que puede recibir el robot: `Avanzar, Girar, Repetir y Secuencia`.
 
 Primero se analizará `Avanzar y Girar`, porque son órdenes sencillas que el robot ejecuta directamente.
-Después se revisará `Repetir y Secuencia`, que contiene otras órdenes.
+Después se revisará `Repetir y Secuencia`, que contienen otras órdenes.
 
-Para estos casos, partimos de que las órdenes internas $o$ funcionen bien $e$, comprobando que $P(e,o)=E(e,o)$ al repetirlas o ejecutarlas una tras de la otra, el robot llega al estado esperado
+Para estos casos, partimos de que las órdenes internas $o$ funcionen bien, y se comprueba que $P(e,o)=E(e,o)$ al repetirlas o ejecutarlas una tras otra, el robot llega al estado esperado
 
 ### Caso base
 
 #### Caso 1: Avanzar(n)
 El programa usa `match` sobre $e.mira$ para determinar qué coordenadas deben modificar,
 si el robot mira al norte, devuelve:
-- `match`: Sirve para comprobar un valor y decidir que acción se realiza segun el caso
+- `match`: Sirve para comprobar un valor y decidir qué acción se realiza según el caso
 - $e.mira$: Permite consultar la dirección hacia la que se está mirando
 
 ```Scala
@@ -258,7 +268,7 @@ Ejemplo:
 val e = Estado(2, 3, Norte)
 val n = -2
 ```
-Sí lo ejecutamos, se realiza la operación
+Si lo ejecutamos, se realiza la operación
 ```Scala
 y = 3 + (-2) 
 y = 1
@@ -282,26 +292,26 @@ El programa ejecuta
 ```Scala
 e.copy(mira = girar(e.mira, sentido))
 ```
-Como $copy$ conserva las coordenadas que no se modifican, solamente cambia la dirección,
+Como `copy` conserva las coordenadas que no se modifican, solamente cambia la dirección,
 por lo cual:
 $P((x, y, d), Girar(s)) =  (x, y, g (d, s))$
 - `Girar(s)`: Orden de girar según el sentido
 
-Ejemplo: Si se esta en (4, 7, Norte) y gira a la derecha:
+Ejemplo: Si se está en (4, 7, Norte) y gira a la derecha:
 ```Scala
 P((4, 7, Norte), Girar(Derecha)) =  (4, 7, Este)
 ```
 Observándose que las coordenadas $x = 4$ y $y = 7$ permanecen iguales. Solamente cambia la dirección de
-$Norte$ a $Este$
+`Norte` a `Este`
 
-Como la corrección de $girar$ se demostró en el punto $1$, el resultado coincide con la especificación
+Como la corrección de `girar` se demostró en el punto $1$, el resultado coincide con la especificación
 
 ### Caso Recursivo: Repetir
-La orden $Repetir(veces, orden)$ permite ejecutar una misma instrucción varias veces.
+La orden `Repetir(veces, orden)` permite ejecutar una misma instrucción varias veces.
 Para justificar este caso, partimos en un caso en donde no hay repeticiones y después analizamos que sucede cuando
 se agrega una repetición más.
-- $repetir(veces, e)$: Inicia la función auxiliar, se ejecuta hasta completar todas las repeticiones
-- $veces$: Cuantas repeticiones deben realizarse
+- `repetir(veces, e)`: Inicia la función auxiliar, se ejecuta hasta completar todas las repeticiones
+- `veces`: Cuántas repeticiones deben realizarse
 - $e$: Estado inicial del robot
 
 Matemáticamente, se podría expresar como: $R(k, e, o)$.
@@ -310,24 +320,22 @@ donde $k \geq 0$.
 
 $R(0, e, o) = e$ Si no hay repeticiones entonces se conserva el estado
 
-$R(k + 1, e, o) = R(k, E(e, o), o)$ Primero se ejecuta una orden y luego se continua con las repeticiones pendientes
+$R(k + 1, e, o) = R(k, E(e, o), o)$ Primero se ejecuta una orden y luego se continúa con las repeticiones pendientes
 
 #### Caso base: Cero o menos repeticiones
-Cuando la cantidad de repeticiones es 0 o negativa, el robot no debe de hacer ningún movimiento o giro
-Para controlar esta situación, la función auxiliar $repetir$ utiliza la siguiente condición
+Cuando la cantidad de repeticiones es 0 o negativa, el robot no debe hacer ningún movimiento o giro
+Para controlar esta situación, la función auxiliar `repetir` utiliza la siguiente condición
 
 ```Scala
-if (restantes <= 0 ){
-actual
-}
+case r if r <= 0 => actual
 ```
 Este comportamiento se expresa matemáticamente así: $P(e, \texttt{Repetir}(v, o)) = e, v \leq 0$.
 - $v$: Cantidad de veces que se repite una orden
 
-- $restantes$: Índica cuantas veces falta ejecutar la orden
+- `restantes`: Indica cuántas veces faltan ejecutar la orden
 
-La condición comprueba si todavía queda repeticiones por realizar. Si $restantes$ es 0 o negativo, la función devuelve
-directamente el estado $actual$ sin ejecutar una orden.
+La condición comprueba si todavía queda repeticiones por realizar. Si `restantes` es 0 o negativo, la función devuelve
+directamente el estado `actual` sin ejecutar una orden.
 
 Ejemplo:
 
@@ -335,38 +343,38 @@ Ejemplo:
 val e = Estado(3, 2, Norte)
 val orden = Repetir(0, Avanzar(5)) 
 ```
-Entonces cuando se llama a $ejecutar(e, orden)$ la función auxiliar recibe 0 repeticiones
+Entonces cuando se llama a `ejecutar(e, orden)` la función auxiliar recibe 0 repeticiones
 y junto con el estado (3, 2, Norte)
-Como se cumple $restantes \le 0$. entonces devuelve el mismo estado
+Como se cumple `restantes <= 0`. entonces devuelve el mismo estado
 
 ```Scala
 Estado(3, 2, Norte)
 ```
-Significando que permanecerá en la misma posición y mirando aún al $Norte$
+Significando que permanecerá en la misma posición y mirando aún al `Norte`
 
-Y si la cantidad de repeticiones fuera negativa (ejemplo: $Repetir(-2, Avanzar(5))$ ), ocurriría lo mismo;
+Y si la cantidad de repeticiones fuera negativa (ejemplo: `Repetir(-2, Avanzar(5))` ), ocurriría lo mismo;
 cumpliendo la condición y el robot conservaría el estado.
 
 Evidenciándose que cuando la cantidad de repeticiones es 0 o <0 (menor que cero), el resultado del programa coincide
 con lo establecido en la especificación "No se ejecuta ninguna orden y se devuelve el estado recibido".
 
 #### Caso recursivo: $k + 1$ Repeticiones pendientes
-Para comprobar que la función $repetir$ esté funcionando correctamente, comenzamos suponiendo que puede
+Para comprobar que la función `repetir` esté funcionando correctamente, comenzamos suponiendo que puede
 realizar correctamente $k$ repeticiones
 - $k$: Cantidad de repeticiones
 
-Cuando queda $k + 1$ repeticiones, primero realiza la orden sobre el estado actual y luego llama a
-la función $repetir$, disminuyendo la cantidad de repeticiones pendiente.
+Cuando quedan $k + 1$ repeticiones, primero realiza la orden sobre el estado actual y luego llama a
+la función `repetir`, disminuyendo la cantidad de repeticiones pendientes.
 
 Lo anterior se realiza mediante la función:
 ```Scala
 repetir(restantes - 1, ejecutar(actual, orden))
 ```
-- $ejecutar(actual, orden)$: Ejecuta 1 vez la orden y obtiene el estado; el resultado de esta se usa para
+- `ejecutar(actual, orden)`: Ejecuta 1 vez la orden y obtiene el estado; el resultado de esta se usa para
   continuar con las otras repeticiones
-- $restantes - 1$: Disminuye la cantidad de repeticiones pendientes, porque se ejecutó una de estas.
+- `restantes - 1`: Disminuye la cantidad de repeticiones pendientes, porque se ejecutó una de estas.
 
-Ejemplo: Sí queremos ejecutar una orden 3 veces
+Ejemplo: Si queremos ejecutar una orden 3 veces
 ```Scala
 val e = Estado(1, 2, Este)
 val orden = Repetir(3, Avanzar(2)) 
@@ -384,7 +392,7 @@ Siendo el resultado final: $Estado(7, 2, Este)$
 
 Y se expresa matemáticamente como: $R(k + 1, e, o) = R(k, E(e, o), o)$
 
-| Repetición      | Operación matematica         | Estado obtenido | Pendientes |
+| Repetición      | Operación matemática         | Estado obtenido | Pendientes |
 |-----------------|------------------------------|-----------------|------------|
 | Inicial         | $R(3,e_0,o)$                 | (1, 2, Este)    | 3          |
 | Primera         | $R(3,e_0,o)=R(2,E(e_0,o),o)$ | (3, 2, Este)    | 2          |
@@ -394,7 +402,7 @@ Y se expresa matemáticamente como: $R(k + 1, e, o) = R(k, E(e, o), o)$
 
 Donde $e_0$ es el estado inicial y $e_1$, $e_2$ y $e_3$ son los estados obtenidos después de cada repetición
 
-Quedando demostrado que $repetir$ ejecuta una orden las veces indicadas, utilizando el resultado anterior
+Quedando demostrado que `repetir` ejecuta una orden las veces indicadas, utilizando el resultado anterior
 para continuar hasta el resultado esperado
 
 ### Caso recursivo: Secuencia
@@ -406,12 +414,12 @@ Esta comienza llamando a
 recorre(ordenes, e)
 ```
 
-Cuando la lista es $Nil$, no queda órdenes por ejecutar. Por eso, el programa devuelve el estado actual:
+Cuando la lista es `Nil`, no quedan órdenes por ejecutar. Por eso, el programa devuelve el estado actual:
 
 ```Scala
 case Nil => actual
 ```
-Ejemplo: Cuando el robot se encuentre en la posición (2, 3), mirando hacia el $Norte$, y recibe una lista vacía
+Ejemplo: Cuando el robot se encuentre en la posición (2, 3), mirando hacia el `Norte`, y recibe una lista vacía
 ```Scala
 val e = Estado(2, 3, Norte)
 val orden = Secuencia(Nil)
@@ -436,10 +444,10 @@ Si tenemos $k + 1$ órdenes, el programa separa la primera instrucción $x$ de l
 ```Scala
 case x :: xs => recorre(xs, ejecutar(actual, x))
 ```
-- $ejecutar(actual, x)$: Ejecuta la primera orden y obtiene el nuevo estado del robot
-- $recorre(xs, ejecutar(actual, x))$: Continúa ejecutando las órdenes restantes usando el nuevo estado
+- `ejecutar(actual, x)`: Ejecuta la primera orden y obtiene el nuevo estado del robot
+- `recorre(xs, ejecutar(actual, x))`: Continúa ejecutando las órdenes restantes usando el nuevo estado
 
-Ejemplo: Que empiece en (2, 3), mirando hacia el $Norte$ y recibe 2 instrucciones
+Ejemplo: Si empieza en (2, 3), mirando hacia el `Norte` y recibe 2 instrucciones
 
 ```Scala
 val e = Estado(2, 3, Norte)
@@ -449,7 +457,7 @@ ejecutar(e, orden)
 
 Dando como resultado final $Estado(2, 5, Este)$
 
-Y en expresión matematica es: $E(e, Secuencia([o_1, o_2])) = E(E(e, o_1), o_2)$
+Y en expresión matemática es: $E(e, Secuencia([o_1, o_2])) = E(E(e, o_1), o_2)$
 - $e$: Estado inicial
 - $o_1$: Primera orden
 - $o_2$: Segunda orden
@@ -466,7 +474,7 @@ Resultado de la secuencia:
 | Segunda         | $E(E(e,o_1),o_2)=(2,5,Este)$                | (2, 5, Este)    | 0                  |
 | Resultado final | $E(e,Secuencia([o_1,o_2]))=E(E(e,o_1),o_2)$ | (2, 5, Este)    | 0                  |
 
-Por lo tanto, $Secuencia$ ejecuta las instrucciones en el orden indicado, utilizando el resultado para continuar
+Por lo tanto, `Secuencia` ejecuta las instrucciones en el orden indicado, utilizando el resultado para continuar
 con la siguiente. Coincidiendo con el comportamiento esperado
 
 ### Terminación
@@ -480,11 +488,9 @@ teniendo en cuenta que si la cantidad inicial es 0 o negativa, la función termi
 Controlándose con:
 
 ```Scala
-if (restantes <= 0 ){
-actual
-}
+case r if r <= 0 => actual
 ```
-Ejemplo: Supongamos que el robot comienza en (2, 3, Norte) y debe de avanzar 2 unidades, repitiendo esa orden 2 veces
+Ejemplo: Supongamos que el robot comienza en (2, 3, Norte) y debe avanzar 2 unidades, repitiendo esa orden 2 veces
 ```Scala
 val estado = Estado(2, 3, Norte)
 val orden = Repetir(2, Avanzar(2))
@@ -501,18 +507,18 @@ ejecutar(estado, orden)
 Las repeticiones pendientes disminuyen así:
 $2 \rightarrow 1 \rightarrow 0$
 
-Cuando llegue a 0 devuelve el último estado, y no se ejecuta más, comprobándose que $Repetir$ termina cuando completa la
+Cuando llegue a 0 devuelve el último estado, y no se ejecuta más, comprobándose que `Repetir` termina cuando completa la
 cantidad de repeticiones indicadas.
 
 #### En secuencia
-Ejecuta la primera orden de la lista y continua con las restantes, en cada llamada la lista se hace mas
-corta hasta llegar a $Nil$
+Ejecuta la primera orden de la lista y continúa con las restantes, en cada llamada la lista se hace más
+corta hasta llegar a `Nil`
 
 Ejemplo
 ```Scala
 Secuencia(List(Avanzar(2), Girar(Derecha)))
 ```
-Viéndose reflejado como las órdenes disminuye
+Viéndose reflejado como las órdenes disminuyen
 ```Scala
 List(Avanzar(2), Girar(Derecha))
 List(Girar(Derecha))
@@ -523,62 +529,59 @@ Cuando llega a `Nil` se ejecuta:
 ```Scala
 case Nil => actual
 ```
-Esto indica que ya no quedan más instrucciones y se devuelve el estado actual, además de que $repetir$ y $recorre$
+Esto indica que ya no quedan más instrucciones y se devuelve el estado actual, además de que `repetir` y `recorre`
 usan recursión de cola.
-Demostrando que las ordenes, las listas y las repeticiones son finitas, además de que la función
+Demostrando que las órdenes, las listas y las repeticiones son finitas, además de que la función
 termina después de completar las instrucciones.
 
 ### Comprobación del resultado
 Para comprobar el funcionamiento de `ejecutar`, se utilizará el siguiente ejemplo:
 
 ```Scala
-val e = Estado(1, 2, Este)
-val orden = Repetir(3, Avanzar(2))
+val e = Estado(0, 0, Norte)
+val orden = Repetir(2, Secuencia(List(Avanzar(3), Girar(Derecha))))
 ejecutar(e, orden)
 ```
-Comienza en la posición (1, 2), mirando hacia el $Este$ y debe avanzar 2 unidades 3 veces.
+Comienza en la posición (0, 0), mirando hacia el `Norte`, y repite 2 veces una secuencia que avanza 3 unidades
+y luego gira a la derecha. Este ejemplo combina `Repetir`, `Secuencia`, `Avanzar` y `Girar`.
 
-Como está mirando al $Este$, cada repetición aumenta la coordenada $x$, mientras que $y$ y la dirección
-permanecen iguales
+Las operaciones realizadas son:
 
-Ls operaciónes realizadas son:
+| Repetición | Orden de la secuencia | Operación | Estado obtenido |
+|------------|-----------------------|-----------|-----------------|
+| Inicial    | —                     | —         | (0, 0, Norte)   |
+| Primera    | `Avanzar(3)`          | $0+3=3$ en $y$ | (0, 3, Norte) |
+| Primera    | `Girar(Derecha)`      | Norte → Este | (0, 3, Este) |
+| Segunda    | `Avanzar(3)`          | $0+3=3$ en $x$ | (3, 3, Este) |
+| Segunda    | `Girar(Derecha)`      | Este → Sur   | (3, 3, Sur)  |
 
-| Repetición | Operación | Estado obtenido |
-|------------|-----------|-----------------|
-| Inicial    | —         | (1, 2, Este)    |
-| Primera    | $1+2=3$   | (3, 2, Este)    |
-| Segunda    | $3+2=5$   | (5, 2, Este)    |
-| Tercera    | $5+2=7$   | (7, 2, Este)    |
-
-Matemáticamente, se puede calcular la posición horizontal final sumando los pasos realizados en las 3 repeticiones:
-$x_f = 1 + 3 \cdot 2 = 7$
-
-La coordenada vertical no cambia $y_f = 2$
+En la primera repetición el robot mira al `Norte`, por lo que avanzar cambia $y$; después de girar mira al `Este`,
+por lo que en la segunda repetición avanzar cambia $x$.
 
 Por lo tanto, el estado final es:
 
 ```Scala
-Estado(7, 2, Este)
+Estado(3, 3, Sur)
 ```
 
-$P((1, 2, Este), Repetir(3, Avanzar(2))) = (7, 2, Este)$
+$P((0, 0, Norte), Repetir(2, Secuencia([Avanzar(3), Girar(Derecha)]))) = (3, 3, Sur)$
 
-El resultado coincide con la especificación, porque si avanzo 6 unidades sin cambiar la dirección.
-Demostrando que $ejecutar$ realiza correctamente las repeticiones y obtiene el estado esperado.
+El resultado coincide con la especificación $E$: aplicar la secuencia dos veces, cada vez sobre el estado que dejó la
+anterior, produce el mismo estado. Demostrando que `ejecutar` combina correctamente las repeticiones y las secuencias.
 
 ### Conclusión
-Mediante los casos base y los casos de recursión, se explicó por qué la función $ejecutar$ funciona correctamente.
+Mediante los casos base y los casos de recursión, se explicó por qué la función `ejecutar` funciona correctamente.
 
-Las órdenes $Avanzar$ y $Girar$ modifican directamente la posición o la dirección del robot.
-Por otro lado, $Repetir$ y $Secuencia$ utilizan recursión para ejecutar las instrucciones en orden correspondiente,
+Las órdenes `Avanzar` y `Girar` modifican directamente la posición o la dirección del robot.
+Por otro lado, `Repetir` y `Secuencia` utilizan recursión para ejecutar las instrucciones en orden correspondiente,
 tomando como punto de inicio el estado anterior.
 
-De esto se puede inferir que siempre que los calculos no superen los límites del tipo $Int$, esta se cumple
+De esto se puede inferir que siempre que los cálculos no superen los límites del tipo $Int$, se cumple
 $\forall e \in Estado, \forall o \in Orden: P(e, o) = E (e, o)$
 Esta expresión indica que "Para cualquier estado $e$ y orden $o$ válidos, el resultado del programa $P(ejecutar)$
 coincide con el comportamiento definido en la especificación $E$"
 
-## Punto 3. cuantasBasicas y profundidad
+## Punto 3. `cuantasBasicas` y `profundidad`
 
 ### Especificación
 
@@ -606,7 +609,8 @@ Sean $P_B$ y $P_D$ los programas en Scala `cuantasBasicas` y `profundidad`:
   def cuantasBasicas(o: Orden): Int = o match {
       case Avanzar(_) => 1
       case Girar(_) => 1
-      case Repetir(veces, orden) => if (veces <= 0) 0 else veces * cuantasBasicas(orden)
+      case Repetir(veces, _) if veces <= 0 => 0
+      case Repetir(veces, orden) => veces * cuantasBasicas(orden)
       case Secuencia(ordenes) => ordenes match {
         case Nil => 0
         case x :: xs => cuantasBasicas(x) + cuantasBasicas(Secuencia(xs))
@@ -740,7 +744,7 @@ $$\forall o \in \text{Orden} : P_B(o) = B(o) \;\land\; P_D(o) = D(o)$$
 
 Por lo tanto, `cuantasBasicas` y `profundidad` son correctas respecto a su especificación, siempre que el resultado de `cuantasBasicas` esté dentro del rango de un `Int`.
 
-## Punto 4. `aplicarA`  y `transformar`
+## Punto 4. `componer`, `rutina`, `aplicarA` y `transformar`
 
 ### Función `aplicarA`
 
@@ -768,7 +772,7 @@ def aplicarA(estados: List[Estado], o: Orden): List[Estado] =
 ```
 #### Demostración
 
-vamos a demostrar que:
+Vamos a demostrar que:
 
 $$
 \forall n \in \mathbb{N},\ \forall o \in \text{Orden},\ \forall e_1, \ldots, e_n \in \text{Estado} : P_{\mathrm{apl}}(\text{List}
@@ -784,7 +788,7 @@ el resultado coincide con la especificación.
 Por otro lado, $f_{\mathrm{apl}}(\text{Nil}, o) =\text{List}() = \text{Nil}$. Entonces $P_{\mathrm{apl}}(\text{Nil}, o) ==
 f_{\mathrm{apl}}(\text{Nil}, o)$.
 
-**Caso inducción.** $n =k + 1$, $k \geq 0$, Con $\texttt{cabeza} = e_1$ y $\texttt{cola} = \text{List}(e_2, \ldots, e_{k+1})$,
+**Caso inducción.** $n =k + 1$, $k \geq 0$, con $\texttt{cabeza} = e_1$ y $\texttt{cola} = \text{List}(e_2, \ldots, e_{k+1})$,
 por el modelo de sustitución.
 
 $$
@@ -902,9 +906,9 @@ Concluimos por inducción estructural que $P_{\mathrm{tra}}(o, g) == T_g(o)$.
 
 ### Componer y rutina
 
-### Especificación
-En este punto se desarrolló 4 funciones; `componer`, `rutina`, `aplicarA` y `transformar`.
-Cada una te permite realizar una tarea diferente con las órdenes del robot
+#### Especificación
+En este punto se desarrollaron 4 funciones; `componer`, `rutina`, `aplicarA` y `transformar`.
+Cada una permite realizar una tarea diferente con las órdenes del robot
 - `componer`: Une 2 órdenes en una secuencia, respetando el orden en que se reciben
 - `rutina`: Crea una orden que permite avanzar, girar y repetir estas acciones en una cantidad determinada de veces
 - `aplicarA`: Ejecuta una misma orden sobre cada uno de los estados de una lista y devuelve los resultados
@@ -913,9 +917,9 @@ Cada una te permite realizar una tarea diferente con las órdenes del robot
 El objetivo es demostrar que cada función realiza correctamente lo que se le pide, y que los resultados obtenidos
 correspondan con los esperados
 
-### Algoritmo
+#### Algoritmo
 
-Las funciones que se analizarán son:
+Las funciones que se analizarán en esta sección son:
 
 ```Scala
 def componer(o1: Orden, o2: Orden): Orden =
@@ -923,39 +927,12 @@ def componer(o1: Orden, o2: Orden): Orden =
 
 def rutina(pasos: Int)(giro: Sentido)(veces: Int): Orden =
   Repetir(veces, componer(Avanzar(pasos), Girar(giro)))
-
-def aplicarA(estados: List[Estado], o: Orden): List[Estado] =
-  estados match {
-    case Nil =>
-      Nil
-    case cabeza :: cola =>
-      ejecutar(cabeza, o) :: aplicarA(cola, o)
-  }
-
-def transformar(o: Orden, f: Orden => Orden): Orden =
-  o match {
-    case Avanzar(_) =>
-      f(o)
-
-    case Girar(_) =>
-      f(o)
-
-    case Repetir(veces, orden) =>
-      Repetir(veces, transformar(orden, f))
-
-    case Secuencia(ordenes) =>
-      def transformarLista(pendientes: List[Orden]): List[Orden] =
-        pendientes match {
-          case Nil =>
-            Nil
-          case cabeza :: cola =>
-            transformar(cabeza, f) :: transformarLista(cola)
-        }
-
-      Secuencia(transformarLista(ordenes))
-  }
 ```
-### Método de demostración
+
+El código de `aplicarA` y `transformar` se presentó y se demostró en las secciones anteriores de este punto
+(*Función `aplicarA`* y *Función `transformar`*), por lo que no se repite aquí.
+
+#### Método de demostración
 
 Para justificar la corrección de estas funciones se utilizaron 2 métodos:
 - **Demostración directa**: Para `componer` y `rutina`, porque únicamente construyen órdenes y no
@@ -963,17 +940,17 @@ Para justificar la corrección de estas funciones se utilizaron 2 métodos:
 - **Inducción**: Para `aplicarA` y `transformar`, porque deben procesar estructuras que pueden contener varios elementos
   En cada paso se compara el comportamiento del programa con el resultado que debería obtenerse según la especificación
 
-### Casos de demostración directa
+#### Casos de demostración directa
 
-### Caso 1: Función componer
+#### Caso 1: Función componer
 
 #### Especificación
-Recibe 2 órdenes $o_1$ y $o_2$, y debe devolver una $Secuencia$ que contenga ambas instrucciones en ese mismo orden
+Recibe 2 órdenes $o_1$ y $o_2$, y debe devolver una `Secuencia` que contenga ambas instrucciones en ese mismo orden
 
 Sea $C(o_1, o_2)$ el resultado esperado $C(o_1, o_2) = Secuencia([o_1, o_2])$
 
-- $o_1$: Primer orden
-- $o_2$: Segundo orden
+- $o_1$: Primera orden
+- $o_2$: Segunda orden
 - $C$: Resultado esperado de `componer`
 
 #### Demostración directa
@@ -983,18 +960,38 @@ El código ejecuta:
 Secuencia(List(o1, o2)) 
 ```
 - $List(o1, o2)$: Construye una lista en la que o1 ocupa la primera posición y o2 la segunda
-- $Secuencia$: Agrupa las 2 órdenes en una instrucción, manteniendo el orden en que fueron recibidas
+- `Secuencia`: Agrupa las 2 órdenes en una instrucción, manteniendo el orden en que fueron recibidas
 
 Coincidiendo con lo esperado: $P_C(o_1, o_2) = C(o_1, o_2)$
 - $P_C$ Representa el resultado que devuelve el programa
 
-Cuando estas secuencias se usan con $ejecutar$, primero se realiza $o_1$ y
+Cuando estas secuencias se usan con `ejecutar`, primero se realiza $o_1$ y
 el estado obtenido se usa para ejecutar $o_2$
 
 Esta se expresa matemáticamente como: $E(e, C(o_1, o_2)) = E(E(e, o_1), o_2)$
-- $E$: Representa el resultado de $ejecutar$, cuya corrección se demostró en el punto 2
+- $E$: Representa el resultado de `ejecutar`, cuya corrección se demostró en el punto 2
 
-Ejemplo: Consideremos $componer(Girar(Derecha), Avanzar(3))$
+Para derivarlo, se evalúa `ejecutar` sobre `componer(o1, o2)`. Con el modelo de sustitución, `componer(o1, o2)`
+produce `Secuencia(List(o1, o2))`, y `ejecutar` llama a `recorre(ordenes, e)` (ver el punto 2):
+
+$$
+\begin{aligned}
+\texttt{ejecutar}(e, \texttt{Secuencia}(\text{List}(o_1, o_2)))
+&\rightarrow \texttt{recorre}(\text{List}(o_1, o_2),\ e) \\
+&\rightarrow \texttt{recorre}(\text{List}(o_2),\ \texttt{ejecutar}(e, o_1)) \\
+&\rightarrow \texttt{recorre}(\text{Nil},\ \texttt{ejecutar}(\texttt{ejecutar}(e, o_1), o_2)) \\
+&\rightarrow \texttt{ejecutar}(\texttt{ejecutar}(e, o_1), o_2)
+\end{aligned}
+$$
+
+Cada paso aplica una vez el caso `x :: xs` de `recorre` (con $x = o_1$ y luego $x = o_2$), y el último aplica el caso
+`Nil`, que devuelve el estado acumulado. Como `ejecutar` es correcta, es decir `ejecutar(e, o)` $= E(e, o)$, se obtiene:
+
+$$
+E(e, C(o_1, o_2)) = E(E(e, o_1), o_2)
+$$
+
+Ejemplo: Consideremos `componer(Girar(Derecha), Avanzar(3))`
 
 Entonces la función construye:
 
@@ -1011,7 +1008,7 @@ Si el robot comienza en Estado(0, 0, Norte), las instrucciones se ejecutan así:
 | Resultado final | —                | (3, 0, Este)    |
 
 Siendo el resultado final Estado(3, 0, Este), permitiendo comprobar que el orden de las instrucciones se conserva,
-también se puede construir una secuencia con una orden vacía: $componer(Secuencia(Nil), Avanzar(4))$
+también se puede construir una secuencia con una orden vacía: `componer(Secuencia(Nil), Avanzar(4))`
 
 Siendo el resultado:
 ```Scala
@@ -1019,9 +1016,9 @@ Secuencia(List(Secuencia(Nil), Avanzar(4)))
 ```
 La orden vacía permanece dentro de la nueva secuencia, porque `componer` no elimina ni simplifica instrucciones
 
-Cumpliéndose asi la especificación para cualquier par de órdenes
+Cumpliéndose así la especificación para cualquier par de órdenes
 
-### Caso 2: Función rutina
+#### Caso 2: Función rutina
 
 #### Especificación
 Recibe una cantidad de pasos, un sentido de giro y un número de repeticiones; teniendo como objetivo
@@ -1030,7 +1027,7 @@ construir una orden que permita avanzar, girar y repetir entre ambas instruccion
 Sea $U(p, s, v)$ el resultado esperado: $U(p, s, v) = Repetir(v,C(Avanzar(p), Girar(s)))$
 - $s$: Sentido del giro
 - $v$: Número de repeticiones
-- $U$: Resultado esperado de la función $rutina$
+- $U$: Resultado esperado de la función `rutina`
 - $p$: Cantidad de pasos que avanza el robot
 
 #### Demostración directa:
@@ -1043,7 +1040,7 @@ def rutina(pasos: Int)(giro: Sentido)(veces: Int): Orden =
 Entonces:
 
 ```Scala
-// Primero se construye las órdenes
+// Primero se construyen las órdenes
 Avanzar(pasos)
 Girar(giro)
 // Luego la función componer agrupa ambas instrucciones
@@ -1060,21 +1057,47 @@ Por lo tanto $P_R(p, s, v) = U(p, s, v)$
 
 El programa construye la orden que se espera, conservando los 3 argumentos recibidos
 
+#### Derivación general
+
+La igualdad anterior es sobre la *orden construida*. Para ver su efecto al ejecutarla, se evalúa `ejecutar` sobre
+`rutina(p)(s)(v)` con argumentos arbitrarios. Sea $b = C(\texttt{Avanzar}(p), \texttt{Girar}(s)) =
+\texttt{Secuencia}([\texttt{Avanzar}(p), \texttt{Girar}(s)])$ el cuerpo que construye `componer`. Como
+`rutina(p)(s)(v)` produce `Repetir(v, b)`, `ejecutar` llama a la auxiliar `repetir(veces, e)` del punto 2, cuyos
+casos se distinguen con guardas:
+
+$$
+\begin{aligned}
+\texttt{ejecutar}(e, \texttt{Repetir}(v, b))
+&\rightarrow \texttt{repetir}(v,\ e) \\
+&\rightarrow \texttt{repetir}(v - 1,\ \texttt{ejecutar}(e, b)) \\
+&\rightarrow \texttt{repetir}(v - 2,\ \texttt{ejecutar}^{2}(e, b)) \\
+&\ \ \vdots \\
+&\rightarrow \texttt{repetir}(0,\ \texttt{ejecutar}^{v}(e, b)) \\
+&\rightarrow \texttt{ejecutar}^{v}(e, b)
+\end{aligned}
+$$
+
+Cada uno de los primeros $v$ pasos aplica el caso general `case _`, que resta una repetición y acumula el estado; el
+último aplica el caso con guarda `case r if r <= 0`, que devuelve el estado acumulado. Aquí $\texttt{ejecutar}^{k}(e, b)$
+denota ejecutar el cuerpo $b$ un total de $k$ veces sobre $e$. Por la derivación de `componer`, cada aplicación cumple
+$E(e, b) = E(E(e, \texttt{Avanzar}(p)), \texttt{Girar}(s))$, de modo que para cualquier $p$, $s$ y $v \geq 0$ la rutina
+avanza $p$ pasos y gira en el sentido $s$ exactamente $v$ veces seguidas, como exige $U(p, s, v)$.
+
 #### Explicación de la currificación
 
-La función usa 3 listas de parámetros: $rutina(pasos)(giro)(veces)$, permitiendo proporcionar los argumentos por etapas
+La función usa 3 listas de parámetros: `rutina(pasos)(giro)(veces)`, permitiendo proporcionar los argumentos por etapas
 
 ```Scala
 val cuadradoDe = rutina(1)(Derecha) _
 ```
 
 Con esta expresión se fijan los pasos y el sentido del giro, quedando pendiente la cantidad de repeticiones,
-luego $cuadradoDe(4)$ construye:
+luego `cuadradoDe(4)` construye:
 
 ```Scala
 Repetir(4, Secuencia(List(Avanzar(1), Girar(Derecha))))
 ```
-La orden obtenida coincide con $cuadrado$, que se encuentra definido.
+La orden obtenida coincide con `cuadrado`, que se encuentra definido.
 
 | Repetición | Estado después de avanzar | Estado después de girar |
 | ---------- | ------------------------- | ----------------------- |
@@ -1084,65 +1107,56 @@ La orden obtenida coincide con $cuadrado$, que se encuentra definido.
 | Tercera    | (1, 0, Sur)               | (1, 0, Oeste)           |
 | Cuarta     | (0, 0, Oeste)             | (0, 0, Norte)           |
 
-Dando como resultado $Estado(0, 0, Norte)$; por lo tanto, la orden fue construida mediante $rutina$ produciendo
-el recorrido esperado cuando se utiliza con $ejecutar$.
+Dando como resultado `Estado(0, 0, Norte)`; por lo tanto, la orden fue construida mediante `rutina` produciendo
+el recorrido esperado cuando se utiliza con `ejecutar`.
 
 #### Comprobación del resultado
 
 Si se ejecuta:
 
 ```Scala
+val inicial = Estado(0, 0, Norte)
 ejecutar(inicial, rutina(1)(Derecha)(4))
 ```
-El robot realiza 4 avances y 4 giros
+Por la demostración directa, `rutina(1)(Derecha)(4)` construye
+`Repetir(4, Secuencia(List(Avanzar(1), Girar(Derecha))))`, es decir, la orden `cuadrado`. El robot realiza 4 avances y
+4 giros, y la tabla anterior muestra el estado después de cada paso:
+
+```Scala
+Estado(0, 0, Norte)
+```
+
+Es el mismo estado inicial, porque el recorrido forma un cuadrado de lado 1 y el robot termina de nuevo en (0, 0)
+mirando al `Norte`. Este resultado coincide con $E$: $E(\text{inicial}, U(1, \text{Derecha}, 4)) = (0, 0, \text{Norte})$.
 
 ### Terminación
 Las 4 funciones terminan siempre que la lista y órdenes sean finitas y las funciones que se utilizan también terminen
-- $componer$: No utiliza recursión. Construye una lista con 2 órdenes y devuelve una $Secuencia$,
+- `componer`: No utiliza recursión. Construye una lista con 2 órdenes y devuelve una `Secuencia`,
   por lo que termina directamente. Ejemplo:
   ```Scala
   Secuencia(List(o1, o2))
   ```
 
-- `rutina`: Tampoco usa recursión. Construye las órdenes $Avanzar$ y $Girar$, las une mediante `componer` y
+- `rutina`: Tampoco usa recursión. Construye las órdenes `Avanzar` y `Girar`, las une mediante `componer` y
   devuelve `Repetir`. Aunque `veces` sea un número grande, la función solamente construye la orden,
   sin ejecutarla. Ejemplo:
   ```Scala
   Repetir(veces, componer(Avanzar(pasos), Girar(giro)))
-
-  - `aplicarA`: Utiliza recursión sobre listas. En cada llamada procesa la cola, reduciendo la cantidad de elementos
-  pendientes. Ejemplo:
-  ```Scala
-  List(e1, e2, e3)
-  List(e2, e3)
-  List(e3)
-  Nil
   ```
-  Cuando llega a `Nil`, devuelve una lista vacía y termina. Como la lista disminuye en cada llamada, la recursión
-  finaliza
 
-- `transformar`: Usa recursión estructural:
-    - `Avanzar y Girar`: Aplica $f$ directamente, sin realizar llamadas recursivas
-    - `Repetir`: Procesa una orden interna más pequeña
-    - `Secuencia`: Utiliza `transformarLista` para asi recorrer las órdenes y reducir la lista en
-      cada llamada hasta llegar a `Nil`
-      Ejemplo:
-  ```Scala
-  List(o1, o2)
-  List(o2)
-  Nil
-  ``` 
-  Por tanto, la función termina porque procesa estructuras cada vez más pequeñas, hasta alcanzar los casos base
+La terminación de `aplicarA` y `transformar`, que sí son recursivas, se explica en sus secciones anteriores: en ambas
+la recursión se hace sobre una estructura finita (una lista o una orden) que se reduce en cada llamada hasta llegar a
+un caso base.
 
-###  Conclusión
+### Conclusión
 Mediante la demostración directa y la inducción se justificó la corrección de las 4 funciones.
 
-`componer` une 2 órdenes respetando su orden, $rutina$ permite construir una secuencia de avance y giro que se repite
+`componer` une 2 órdenes respetando su orden, `rutina` permite construir una secuencia de avance y giro que se repite
 varias veces, `aplicarA` usa recursión sobre la lista para ejecutar una misma orden en diferentes estados y
 `transformar` emplea recursión estructural para modificar las órdenes básicas, conservando la
 estructura de las compuestas
 
-Por tanto, las 4 funciones cumplen sus especificaciones siempre que estas terminen y produzcan los resultados esperados
+Por tanto, las 4 funciones cumplen sus especificaciones porque aplicarA y transformar recorren estructuras finitas
 
 
 ## Punto 5. `simplificar`
@@ -1165,21 +1179,21 @@ def simplificar(o: Orden): Orden = o match {
     case Girar(sentido) =>
       Girar(sentido)
 
+    case Repetir(veces, _) if veces <= 0 =>
+      Secuencia(Nil)
+
+    case Repetir(veces, orden) if veces == 1 =>
+      simplificar(orden)
+
     case Repetir(veces, orden) =>
-      if (veces <= 0) {
-        Secuencia(Nil)
-      } else if (veces == 1) {
-        simplificar(orden)
-      } else {
-        val simplificada = simplificar(orden)
+      val simplificada = simplificar(orden)
 
-  simplificada match {
-          case Secuencia(Nil) =>
-            Secuencia(Nil)
+      simplificada match {
+        case Secuencia(Nil) =>
+          Secuencia(Nil)
 
-          case _ =>
-            Repetir(veces, simplificada)
-        }
+        case _ =>
+          Repetir(veces, simplificada)
       }
     case Secuencia(ordenes) =>
 
@@ -1280,7 +1294,7 @@ Donde $f^{k}$ es aplicar $f$ $k$ veces, y $f^{k} = \mathrm{id}$ si $k \leq 0$ (n
 o menos veces simplemente no hace nada).
 Una composición $g \circ f$ significa "primero $f$, después $g$".
 
-**`Secuencia`.** El auxiliar `recorre(pendientes, actual)`, devuelve `recorre(XS, ejecutar(actual, x))`.
+**`Secuencia`.** El auxiliar `recorre(pendientes, actual)`, devuelve `recorre(xs, ejecutar(actual, x))`.
 
 Es decir, `x y xs`, que es exactamente $\mathcal{E}[\texttt{Secuencia}(\mathit{cola})] \circ \mathcal{E}[\mathit{cabeza}]$.
 Con `Nil` no hace nada.
@@ -1378,20 +1392,20 @@ $$
 
 Para toda orden $o$ y toda lista $ps$ de órdenes se demuestra:
 
-```math
+$$
 \mathcal{E}[P_{\mathrm{sim}}(o)] == \mathcal{E}[o]
 \qquad \text{y} \qquad
 \mathcal{E}[\texttt{Secuencia}(\texttt{simplificarLista}(ps))] == \mathcal{E}[\texttt{Secuencia}(ps)]
-```
+$$
 La segunda afirmación se necesita para el caso de `Secuencia`, y las dos se demuestran juntas por **inducción bien fundada sobre
 $\mu$**: se supone que ambas valen para todo lo de medida menor (HI), lo que justifica cada "por la HI" de abajo.
 
 **Caso base:** $o =\texttt{Avanzar}(0)$
 
-```math
+$$
 P_{\mathrm{sim}}(\texttt{Avanzar}(0)) \rightarrow \texttt{Secuencia}
 (\texttt{Nil})
-```
+$$
 
 Por el Lema Z, $\mathcal{E}[\texttt{Avanzar}(0)] = \mathrm{id} = \mathcal{E}[\texttt{Secuencia}(\texttt{Nil})]$.
 
@@ -1413,9 +1427,9 @@ $\mathcal{E}[P_{\mathrm{sim}}(\texttt{Repetir}(k, o'))] = \mathcal{E}[o']^{k}$. 
 
 * $k \geq 2$ y $P_{\mathrm{sim}}(o')$ es otra orden: devuelve $\texttt{Repetir}(k, P_{\mathrm{sim}}(o'))$, y
 
-```math
+$$
 \mathcal{E}[\texttt{Repetir}(k, P_{\mathrm{sim}}(o'))] = \mathcal{E}[P_{\mathrm{sim}}(o')]^{k} = \mathcal{E}[o']^{k}
-```
+$$
 
 Por la ecuación de `Repetir` y la Hipótesis.
 
@@ -1474,8 +1488,9 @@ la cuarta, las Hipótesis.
 En los dos últimos, por la ecuación de `Secuencia` y HI:
 
 $$
-\mathcal{E}[\texttt{Secuencia}(\mathit{cabezaSimplificada} :: \mathit{colaSimplificada})] = \mathcal{E}[\texttt{Secuencia}(\mathit{colaSimplificada})] = \circ \mathcal{E}[\mathit{cabezaSimplificada}] = 
-\mathcal{E}[\texttt{Secuencia}(\mathit{cola})] \mathcal{E}[\mathit{cabeza}]
+\mathcal{E}[\texttt{Secuencia}(\mathit{cabezaSimplificada} :: \mathit{colaSimplificada})] =
+\mathcal{E}[\texttt{Secuencia}(\mathit{colaSimplificada})] \circ \mathcal{E}[\mathit{cabezaSimplificada}] =
+\mathcal{E}[\texttt{Secuencia}(\mathit{cola})] \circ \mathcal{E}[\mathit{cabeza}]
 $$
 Los cuatro caminos cubren todas las posibilidades de `cabezaSimplificada` y `colaSimplificada`.
 

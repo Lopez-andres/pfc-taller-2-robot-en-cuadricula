@@ -359,7 +359,7 @@ class RobotCuadriculaTest extends AnyFunSuite {
     assert(simplificar(Repetir(3, Repetir(1, Avanzar(2)))) == Repetir(3, Avanzar(2)))
   }
 
-  test("simplificar: al quitar órdenes sin valor de varios, tipos, los avances que quedan se unen en cadena"){
+  test("simplificar: al quitar órdenes sin valor de varios tipos, los avances que quedan se unen en cadena"){
     val o = Secuencia(List(Avanzar(1), Repetir(0, Girar(Izquierda)),
       Secuencia(List(Avanzar(0), Secuencia(Nil))),
       Avanzar(2), Repetir(1, Avanzar(3))))
@@ -377,7 +377,6 @@ class RobotCuadriculaTest extends AnyFunSuite {
     assert(simplificar(o) == Repetir(5, Secuencia(List(Avanzar(3), Girar(Derecha), Avanzar(3)))))
   }
   test("simplificar avances que se cancelan (suma 0) desaparecen y también los demás avances vecinos se unen"){
-    val o = Secuencia(List(Avanzar(3), Secuencia(List(Avanzar(2), Avanzar(-2))), Girar(Derecha), Avanzar(1), Avanzar(-1)))
     assert(simplificar(Repetir(4, Secuencia(List(Avanzar(3), Avanzar(-3))))) == Secuencia(Nil))
 
   }
@@ -387,7 +386,7 @@ class RobotCuadriculaTest extends AnyFunSuite {
     assert(simplificar(o) == Secuencia(List(Repetir(2, Avanzar(2)), Girar(Derecha))))
   }
 
-  test("simplificar: un Repartir en medio separa los avances, no se unen los de afuera"){
+  test("simplificar: un Repetir en medio separa los avances, no se unen los de afuera"){
     val o = Secuencia(List(Avanzar(1), Repetir(2, Avanzar(1)),Avanzar(1)))
     assert(simplificar(o) == o)
   }
