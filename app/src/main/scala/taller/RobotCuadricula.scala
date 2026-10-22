@@ -98,7 +98,7 @@ class RobotCuadricula {
               transformar(cabeza,f) :: transformarLista(cola)
 
           }
-//       Secuencia(transformarLista(ordenes))
+        Secuencia(transformarLista(ordenes))
     }
 
   // Punto 5 -------------------------------------------------------------------

@@ -257,7 +257,7 @@ class RobotCuadriculaTest extends AnyFunSuite {
   }
 
   test("transformar: una secuencia vacía anidada queda vacía y no se le aplica la función"){
-    val duplicar: Orden => Orden = x => Secuencia(List(x, x,))
+    val duplicar: Orden => Orden = x => Secuencia(List(x, x))
     assert(transformar(Secuencia(List(Secuencia(Nil), Avanzar(1))), duplicar) ==
       Secuencia(List(Secuencia(Nil), Secuencia(List(Avanzar(1), Avanzar(1))))))
   }
