@@ -131,6 +131,18 @@ class RobotCuadriculaTest extends AnyFunSuite {
   test("aplicarA: sobre la lista vacía no hay nada que hacer") {
     assert(aplicarA(Nil, Avanzar(2)) == Nil)
   }
+  test("aplicarA: Avanza(3) mueve cada estado según hacia dónde mira, y conserva el orden") {
+    val estados = List(Estado(0, 0, Este), Estado(2, 2, Oeste), Estado(1, 1, Sur))
+    assert(aplicarA(estados, Avanzar(3)) == List(Estado(3, 0, Este), Estado(-1, 2, Oeste), Estado(1, -2, Sur)))
+  }
+  test("aplicarA: Girar(Izquierda) cambiando solo la dirección de los cuatro estados"){
+    val estados = List(Estado(0, 0, Norte), Estado(1, 1, Este), Estado(2, 2, Sur), Estado(3, 3, Oeste))
+    assert(aplicarA(estados, Girar(Izquierda)) == List(Estado(0, 0, Oeste), Estado(1, 1, Norte), Estado(2, 2, Este), Estado(3, 3, Sur)))
+  }
+  test("aplicarA: con un solo estado aplica la orden una vez"){
+    assert(aplicarA(List(Estado(2, 3, Oeste)), Girar(Derecha)) == List(Estado(2, 3, Norte)))
+  }
+
 
   test("transformar: duplicar los avances deja los giros como estaban") {
     val doble = transformar(cuadrado, {
@@ -139,9 +151,39 @@ class RobotCuadriculaTest extends AnyFunSuite {
     })
     assert(doble == Repetir(4, Secuencia(List(Avanzar(2), Girar(Derecha)))))
   }
-
+  test("transformar: intercambiar básicas conserva la forma de Repetir y Secuencia"){
+    val intercambia: Orden => Orden ={
+      case Avanzar(_) => Girar(Derecha)
+      case Girar(_) => Avanzar(1)
+      case otra => otra
+    }
+    assert(transformar(Secuencia(List(Avanzar(5), Repetir(2, Girar(Izquierda)))), intercambia) ==
+      Secuencia(List(Girar(Derecha), Repetir(2, Avanzar(1)))))
+  }
   test("transformar: con la identidad no cambia nada") {
     assert(transformar(cuadrado, (o: Orden) => o) == cuadrado)
+  }
+
+  test("transformar: la función solo se aplica a las órdenes básicas, no a repetir ni a Secuencia"){
+    // duplicar cada básica: Avanzar(1) pasa a Secuencia(Avanzar(1), Avanzar(1)), el repetir se queda.
+    val duplicar: Orden => Orden = x => Secuencia(List(x, x))
+    assert(transformar(Repetir(2, Avanzar(1)), duplicar) == Repetir(2, Secuencia(List(Avanzar(1), Avanzar(1)))))
+  }
+
+  test("transformar: duplica los avances cambia el recorrido del robot como se espera"){
+    val o = Secuencia(List(Avanzar(3), Girar(Derecha), Avanzar(2)))
+    val doble = transformar(o, {
+      case Avanzar(n) => Avanzar(2 * n)
+      case otra => otra
+    })
+    assert(ejecutar(inicial, o) == Estado(2, 3, Este))
+    assert(ejecutar(inicial, doble) == Estado(4, 6, Este))
+  }
+
+  test("transformar: una secuencia vacía anidada queda vacía y no se le aplica la función"){
+    val duplicar: Orden => Orden = x => Secuencia(List(x, x,))
+    assert(transformar(Secuencia(List(Secuencia(Nil), Avanzar(1))), duplicar) ==
+      Secuencia(List(Secuencia(Nil), Secuencia(List(Avanzar(1), Avanzar(1))))))
   }
 
   // Punto 5 -------------------------------------------------------------------
@@ -196,4 +238,39 @@ class RobotCuadriculaTest extends AnyFunSuite {
   test("simplificar: el anidamiento interior también se reduce") {
     assert(simplificar(Repetir(3, Repetir(1, Avanzar(2)))) == Repetir(3, Avanzar(2)))
   }
+
+  test("simplificar: al quitar órdenes sin valor de varios, tipos, los avances que quedan se unen en cadena"){
+    val o = Secuencia(List(Avanzar(1), Repetir(0, Girar(Izquierda)),
+      Secuencia(List(Avanzar(0), Secuencia(Nil))),
+      Avanzar(2), Repetir(1, Avanzar(3))))
+    assert(simplificar(o) == Avanzar(6))
+  }
+
+  test("simplificar: los giros nunca se juntan ni se cancelan, aunque sean seguidos u opuestos"){
+    val o = Secuencia(List(Girar(Derecha), Repetir(4, Secuencia(List(Repetir(-3, Avanzar(7)), Avanzar(0)))),
+      Girar(Izquierda)))
+    assert(simplificar(o) == Secuencia(List(Girar(Derecha), Girar(Izquierda))))
+  }
+
+  test("simplificar: dentro de un Repetir se simplifica el cuerpo y quitar un Avance(0) junta los avances vecinos"){
+    val o = Repetir(5, Secuencia(List(Avanzar(1), Avanzar(2), Girar(Derecha), Avanzar(0), Avanzar(4), Avanzar(-1))))
+    assert(simplificar(o) == Repetir(5, Secuencia(List(Avanzar(3), Girar(Derecha), Avanzar(3)))))
+  }
+  test("simplificar avances que se cancelan (suma 0) desaparecen y también los demás avances vecinos se unen"){
+    val o = Secuencia(List(Avanzar(3), Secuencia(List(Avanzar(2), Avanzar(-2))), Girar(Derecha), Avanzar(1), Avanzar(-1)))
+    assert(simplificar(Repetir(4, Secuencia(List(Avanzar(3), Avanzar(-3))))) == Secuencia(Nil))
+
+  }
+
+  test("simplificar: un Repetir de veces se conserva y su cuerpo  se simplifica") {
+    val o = Secuencia(List(Repetir(2, Secuencia(List(Avanzar(1), Avanzar(1)))), Girar(Derecha)))
+    assert(simplificar(o) == Secuencia(List(Repetir(2, Avanzar(2)), Girar(Derecha))))
+  }
+
+  test("simplificar: un Repartir en medio separa los avances, no se unen los de afuera"){
+    val o = Secuencia(List(Avanzar(1), Repetir(2, Avanzar(1)),Avanzar(1)))
+    assert(simplificar(o) == o)
+  }
+
+
 }
