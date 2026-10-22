@@ -1,10 +1,305 @@
+# Informe de proceso: Taller 2, un robot en la cuadrícula
+
+Un robot se mueve por una cuadrícula infinita de coordenadas enteras. Siempre ocupa una
+posición y mira hacia uno de los cuatro puntos cardinales. Entiende cuatro órdenes:
+`Avanzar(n)`, `Girar(sentido)`, `Repetir(veces, orden)` y `Secuencia(ordenes)`. Las dos
+últimas contienen otras órdenes, por eso el tipo `Orden` es recursivo y las funciones que
+lo recorren también.
+
+Un estado se escribe `(x, y, mira)`: posición `(x, y)` y dirección `mira`.
+El estado inicial es `(0, 0, Norte)`. `Avanzar` hacia el `Norte` suma a `y` y hacia el
+`Este` suma a `x`; hacia el `Sur` resta a `y` y hacia el `Oeste` resta a `x`.
+
+Cada punto del taller tiene su sección, con la misma estructura.
+
+Para abreviar, en las tablas `D` es `Derecha` e `I` es `Izquierda`.
+
+# Punto 1. `girar`
+
+## Definición del Algoritmo
+
+```Scala 
+  def girar(d: Direccion, s: Sentido): Direccion = (d, s) match {
+    case (Norte, Derecha) => Este
+    case (Norte, Izquierda) => Oeste
+    case (Sur, Derecha) => Oeste
+    case (Sur, Izquierda) => Este
+    case (Este, Derecha) => Sur
+    case (Este, Izquierda) => Norte
+    case (Oeste, Derecha) => Norte
+    case (Oeste, Izquierda) => Sur
+  }
+```
+
+`girar` recibe una dirección `d` y un sentido `s` y devuelve la dirección en la que
+queda mirando el robot después de girar 90 grados. No recibe una posición y no mueve
+al robot: solo cambia hacia dónde mira.
+
+`match (d, s)` compara la pareja formada por la dirección y el sentido contra cada
+`case`, de arriba hacia abajo, y devuelve el resultado del primero que coincide. Hay 4 direcciones y
+2 sentidos, así que hay 8 combinaciones y cada una tiene su `case`.
+
+## Explicación paso a paso
+| Dirección | Sentido     | Resultado  |
+|-----------|-------------|------------|
+| `Norte`   | `D`   | `Este`     |
+| `Norte`   | `I` | `Oeste`    |
+| `Sur`     | `D`   | `Oeste`    |
+| `Sur`     | `I`  |`Este`|
+| `Este`    | `D`   |`Sur`|
+| `Este`    |`I`  |`Norte`|
+| `Oeste`   | `D`   |`Norte`|
+| `Oeste`   | `I` |`Sur`|
+
+Las direcciones forman un círculo: `Norte` -> `Este` -> `Sur` -> `Oeste` -> `Norte`.
+Girar a la `Derecha` lleva a la siguiente dirección de ese círculo y girar a la
+`Izquierda` lleva a la anterior.
+
+`Derecha` e `Izquierda` son los dos sentidos de giro, y cada giro es de 90 grados.
+
+Los tipos de `d` y `s` los declara la firma de la función: `d` es una `Direccion` y `s` es un
+`Sentido`. Ambos se definen con `sealed trait` y sus valores (`Norte`, `Derecha`, etc.) son `case object`.
+Por eso el compilador conoce todas las alternativas y avisa si falta alguna de las 8 combinaciones.
+
+## Comprobación del resultado
+
+### Traza de posiciones del robot
+
+`girar` no mueve el robot, así que se toma la posición `(0,0)` solo para mostrar que
+`x` e `y` no cambian.
+
+| Orden                     | Estado antes    | Estado después  |
+|---------------------------|-----------------|-----------------|
+| `girar(Norte, D)`   | `(0, 0, Norte)` | `(0, 0, Este)`  |
+| `girar(Norte, I)` | `(0, 0, Norte)` | `(0, 0, Oeste)` |
+| `girar(Oeste, D)`   | `(0, 0, Oeste)` | `(0, 0, Norte)` |
+| `girar(Sur, I)`   | `(0, 0, Sur)`   | `(0, 0, Este)`  |
+
+En los cuatro casos `x` e `y` no cambian; solo cambia la dirección.
+
+## Ejemplo de uso
+
+```Scala
+val robot = new RobotCuadricula
+println(robot.girar(Oeste, Derecha))  // El resultado será: Norte
+```
+
+## Ejemplos del enunciado
+
+|Entrada | Salida  |
+|-------|---------|
+| `girar(Norte, D)` | `Este`  |
+| `girar(Norte, I)` | `Oeste` |
+| `girar(Oeste, D)` | `Norte` |
+| `girar(Sur, I)` | `Este`  |
+
+## Conclusión
+`girar` devuelve la dirección que queda tras un giro de 90 grados. Se hace uso de `match` sobre
+la pareja `(d,s)`, con un `case` por cada una de las 8 combinaciones.
+
+# Punto 3. `cuantasBasicas` y `profundidad`
+
+En este punto, `cuadrado` es `Repetir(4, Secuencia(List(Avanzar(1), Girar(Derecha))))`.
+
+## Definición del Algoritmo
+
+```Scala
+  def cuantasBasicas(o: Orden): Int = o match {
+      case Avanzar(_) => 1
+      case Girar(_) => 1
+      case Repetir(veces, orden) => if (veces <= 0) 0 else veces * cuantasBasicas(orden)
+      case Secuencia(ordenes) => ordenes match {
+        case Nil => 0
+        case x :: xs => cuantasBasicas(x) + cuantasBasicas(Secuencia(xs))
+      }
+  }
+
+  def profundidad(o: Orden): Int = o match {
+    case Avanzar(_) => 1
+    case Girar(_) => 1
+    case Repetir(veces, orden) => 1 + profundidad(orden)
+    case Secuencia(ordenes) => {
+      def maximo(l: List[Orden]): Int = l match {
+        case Nil => 0
+        case x :: xs => math.max(profundidad(x), maximo(xs))
+      }
+      1 + maximo(ordenes)
+    }
+  }
+```
+
+* `cuantasBasicas` recibe una orden y devuelve cuántos `Avanzar` y `Girar` llega a ejecutar, contando las repeticiones.
+* `profundidad` recibe una orden y devuelve cuántos niveles de anidamiento tiene.
+* Ninguna ejecuta la orden ni recibe un estado: solo recorren su estructura.
+* La diferencia: `cuantasBasicas` **multiplica** por `veces`; `profundidad` **ignora** `veces`, porque repetir una orden no la hace más honda.
+* Como `Orden` es recursivo, ambas usan `match` con un caso por alternativa. `Secuencia` lleva una lista, que se recorre con un caso
+  para `Nil` y otro para `x :: xs`.
+* `maximo` es una función dentro de `profundidad`.
+
+## Explicación paso a paso
+
+### `cuantasBasicas`
+
+* `Avanzar` y `Girar` valen 1: son las órdenes básicas.
+* `Repetir(veces, orden)` vale `veces` veces lo que vale la orden de adentro. Si `veces` es cero o negativo no se ejecuta nada y vale 0:
+
+$$\text{cuantasBasicas}(\text{Repetir}(v, o)) = \begin{cases} v \cdot \text{cuantasBasicas}(o) & \text{si } v > 0 \\ 0 & \text{si } v \le 0 \end{cases}$$
+
+* `Secuencia(Nil)` vale 0: una lista vacía no ejecuta nada y termina la recursión.
+* `Secuencia(x :: xs)` suma lo de la primera orden `x` más lo del resto. Para el resto se arma una nueva `Secuencia(xs)` con la cola, y así la función se llama a sí
+  misma sobre una lista más corta:
+
+$$\text{cuantasBasicas}(\text{Secuencia}(x :: xs)) = \text{cuantasBasicas}(x) + \text{cuantasBasicas}(\text{Secuencia}(xs))$$
+
+### `profundidad`
+
+* `Avanzar` y `Girar` valen 1.
+* `Repetir(_, orden)` vale 1 más lo de la orden de adentro. `veces` no se usa:
+
+$$\text{profundidad}(\text{Repetir}(v, o)) = 1 + \text{profundidad}(o)$$
+
+* `Secuencia(ordenes)` vale 1 más la profundidad de su orden más honda. `maximo` recorre la lista: vale 0 con `Nil`, y con `x :: xs` toma el mayor entre
+  `profundidad(x)` y `maximo(xs)`.
+* Por eso `Secuencia(Nil)` vale 1 + 0 = 1, como se pide en el enunciado.
+
+## Seguimiento de las llamadas recursivas
+
+Ejemplo: `cuantasBasicas(cuadrado)`.
+
+### Paso 1: Llamada inicial
+
+```Scala
+cuantasBasicas(cuadrado)
+// Repetir con veces = 4 > 0: 4 * cuantasBasicas(Secuencia(List(Avanzar(1), Girar(Derecha))))
+```
+
+### Paso 2: Bajan las llamadas
+
+```text
+C1: Secuencia con dos órdenes: cuantasBasicas(Avanzar(1)) + cuantasBasicas(Secuencia(List(Girar(Derecha))))
+C2: Secuencia con una orden: cuantasBasicas(Girar(Derecha)) + cuantasBasicas(Secuencia(Nil))
+C3: cuantasBasicas(Secuencia(Nil))
+```
+
+`cuantasBasicas(Avanzar(1))` y `cuantasBasicas(Girar(Derecha))` devuelven 1 de inmediato.
+
+### Paso 3: Caso base
+
+```Scala
+cuantasBasicas(Secuencia(Nil)) // devuelve 0
+```
+
+### Paso 4: Suben los resultados
+
+```text
+C2: 1 + 0 = 1
+C1: 1 + 1 = 2
+Repetir: 4 * 2 = 8
+```
+
+Con `profundidad(cuadrado)` el recorrido es el mismo:
+
+```Scala
+maximo(List(Girar(Derecha))) = max(1, maximo(Nil)) = max(1, 0) = 1
+maximo(List(Avanzar(1), Girar(Derecha))) = max(1, 1) = 1
+Secuencia: 1 + 1 = 2
+Repetir: 1 + 2 = 3
+```
+
+## Comprobación del resultado
+
+### Traza de posiciones del robot
+
+Estas funciones no ejecutan la orden. Para comprobarlas se ejecuta `cuadrado` a mano desde `(0, 0, Norte)` y
+se cuentan las órdenes básicas que se ejecutan.
+
+| Paso | Orden básica     | Estado          | 
+|------|------------------|-----------------|
+| 0    | (inicio)         | `(0, 0, Norte)` |
+| 1    | `Avanzar(1)`     | `(0, 1, Norte)` |
+| 2    | `Girar(Derecha)` | `(0, 1, Este)`  |
+| 3    | `Avanzar(1)`     | `(1, 1, Este)`  |
+| 4    | `Girar(Derecha)` | `(1, 1, Sur)`   |
+| 5    | `Avanzar(1)`     | `(1, 0, Sur)`   |
+| 6    | `Girar(Derecha)` | `(1, 0, Oeste)` |
+| 7    | `Avanzar(1)`     | `(0, 0, Oeste)` |
+| 8    | `Girar(Derecha)` | `(0, 0, Norte)` |
+
+Se ejecutan 8 órdenes básicas y el robot vuelve a `(0, 0, Norte)`. En este ejemplo el conteo coincide con `cuantasBasicas(cuadrado) = 8`.
+
+`profundidad` no ejecuta nada, así que no tiene traza de posiciones. Su resultado se comprueba con los niveles de `cuadrado`:
+
+| Nivel | Orden                          |
+|-------|--------------------------------|
+| 1     | `Repetir(4, ...)`              |
+| 2     | `Secuencia(List(...))`         |
+| 3     | `Avanzar(1)` y `Girar(Derecha)`|
+
+Son 3 niveles, igual que `profundidad(cuadrado) = 3`.
+
+## Ejemplo de uso
+
+```Scala
+val robot = new RobotCuadricula
+val cuadrado = Repetir(4, Secuencia(List(Avanzar(1), Girar(Derecha))))
+println(robot.cuantasBasicas(cuadrado)) // 8
+println(robot.profundidad(cuadrado)) // 3
+```
+
+## Ejemplos del enunciado
+
+| Entrada                                                    | Salida |
+|------------------------------------------------------------|--------|
+| `cuantasBasicas(Avanzar(3))`                               | `1`    |
+| `cuantasBasicas(cuadrado)`                                 | `8`    |
+| `profundidad(Avanzar(3))`                                  | `1`    |
+| `profundidad(Secuencia(List(Avanzar(1), Girar(Derecha))))` | `2`    |
+| `profundidad(cuadrado)`                                    | `3`    |
+| `profundidad(Secuencia(Nil))`                              | `1`    |
+
+## Diagrama de llamados de pila
+
+Seguimiento de `cuantasBasicas(cuadrado)`. Las llamadas a `Avanzar` y `Girar` devuelven 1 de inmediato y no se dibujan.
+
+```mermaid
+sequenceDiagram
+    participant R as Repetir con 4 veces 
+    participant C1 as C1 con 2 órdenes
+    participant C2 as C2 con 1 orden
+    participant C3 as C3 con Nil
+    
+    R->>C1: llamada con la secuencia
+    C1->>C2: llamada con la cola
+    C2->>C3: llamada con la cola
+    C3-->>C2: 0
+    C2-->>C1: 1 + 0 = 1
+    C1-->>R: 1 + 1 = 2
+    R-->>R: 4 * 2 = 8
+```
+
+Niveles de `cuadrado`, que dan la profundidad:
+
+```mermaid
+flowchart TD
+    A["Repetir(4, ...): nivel 1"] --> B["Secuencia: nivel 2"]
+    B --> C["Avanzar(1): nivel 3"]
+    B --> D["Girar(Derecha): nivel 3"]
+```
+
+## Límite de `Int`
+
+`cuantasBasicas` usa `*` y `+` sobre `Int`. Si el resultado real supera $2^{31} - 1$, el valor
+se desborda sin avisar y sale incorrecto (incluso negativo). El enunciado fija el tipo `Int`
+de retorno, así que se asume que el resultado cabe en un `Int`.
+
+## Conclusión
+
+`cuantasBasicas` cuenta las órdenes básicas que se ejecutarían, multiplicando por las repeticiones, y `profundidad` mide los niveles de anidamiento
+sin usar `veces`. Ambas recorren el tipo `Orden` con `match` y la lista de `Secuencia` con `Nil` y `x :: xs`.
+
 # Punto 4. `aplicarA` y `transformar`
 
-`Estado(x, y, mira)`. El estado inicial es `(0, 0, mira)`. Avanzar hacía el `Norte`, suma a `y`,
-hacia el `Sur` resta a `y`, hacia el `Este` suma a `x` y hacia el `Oeste` resta a `x`. En la table `D` es Derecha
-
-
-#parte 1. `AplicarA`
+# parte 1. `AplicarA`
 
 ## 1.1 Definición del Algoritmo
 

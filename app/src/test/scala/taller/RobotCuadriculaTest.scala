@@ -12,6 +12,9 @@ class RobotCuadriculaTest extends AnyFunSuite {
 
   val cuadrado = Repetir(4, Secuencia(List(Avanzar(1), Girar(Derecha))))
 
+  val direcciones: List[Direccion] = List(Norte, Este, Sur, Oeste)
+  val sentidos: List[Sentido] = List(Izquierda, Derecha)
+
   // Punto 1 -------------------------------------------------------------------
 
   test("girar: Norte a la derecha da Este") { assert(girar(Norte, Derecha) == Este) }
@@ -28,6 +31,34 @@ class RobotCuadriculaTest extends AnyFunSuite {
   test("girar: un giro y su contrario se cancelan") {
     assert(girar(girar(Este, Derecha), Izquierda) == Este)
   }
+
+  test("girar: las cuatro parejas que no aparecen en los ejemplos del enunciado") {
+    assert(girar(Este, Derecha) == Sur)
+    assert(girar(Este, Izquierda) == Norte)
+    assert(girar(Sur, Derecha) == Oeste)
+    assert(girar(Oeste, Izquierda) == Sur)
+  }
+
+  test("girar: cuatro giros a la izquierda vuelven a la dirección inicial desde cualquiera") {
+    assert(direcciones.forall(d =>
+       List.fill(4)(Izquierda).foldLeft(d)((acc, s) => girar(acc, s)) == d))
+  }
+
+  test("girar: una izquierda equivale a tres derechas") {
+    assert(direcciones.forall(d =>
+      girar(d, Izquierda) == girar(girar(girar(d, Derecha), Derecha), Derecha)))
+  }
+
+  test("girar: dos giros iguales dan la dirección opuesta") {
+    val opuesta = Map[Direccion, Direccion](Norte -> Sur, Sur -> Norte, Este -> Oeste, Oeste -> Este)
+    assert(direcciones.forall(d => sentidos.forall(s => girar(girar(d, s), s) == opuesta(d))))
+  }
+
+  test("girar: derecha e izquierda se cancelan en ambos órdenes desde cualquier dirección") {
+    assert(direcciones.forall(d =>
+      girar(girar(d, Derecha), Izquierda) == d && girar(girar(d, Izquierda), Derecha) == d))
+  }
+
 
   // Punto 2 -------------------------------------------------------------------
 
@@ -82,6 +113,28 @@ class RobotCuadriculaTest extends AnyFunSuite {
     assert(cuantasBasicas(Secuencia(Nil)) == 0)
   }
 
+  test("cuantasBasicas: repeticiones anidadas se multiplican") {
+    assert(cuantasBasicas(Repetir(3, Repetir(2, Avanzar(1)))) == 6)
+  }
+
+  test("cuantasBasicas: una secuencia suma lo de cada orden, incluido el cuadrado") {
+    assert(cuantasBasicas(Secuencia(List(Avanzar(2), cuadrado, Girar(Izquierda)))) == 10)
+  }
+
+  test("cuantasBasicas: un Repetir(0, ...) en medio de una secuencia no cuenta") {
+    assert(cuantasBasicas(Secuencia(List(Avanzar(1), Repetir(0, Avanzar(9)), Girar(Derecha)))) == 2)
+  }
+
+  test("cuantasBasicas: secuencias anidadas y repetir la secuencia vacía") {
+    val anidada = Secuencia(List(Secuencia(List(Avanzar(1), Avanzar(1))), Secuencia(List(Girar(Derecha)))))
+    assert(cuantasBasicas(anidada) == 3)
+    assert(cuantasBasicas(Repetir(5, Secuencia(Nil))) == 0)
+  }
+
+  test("cuantasBasicas: repetir con veces negativo no ejecuta nada") {
+    assert(cuantasBasicas(Repetir(-2, Avanzar(5))) == 0)
+  }
+
   test("profundidad: una orden básica tiene profundidad 1") {
     assert(profundidad(Avanzar(3)) == 1)
   }
@@ -100,6 +153,29 @@ class RobotCuadriculaTest extends AnyFunSuite {
 
   test("profundidad: manda la rama más honda") {
     assert(profundidad(Secuencia(List(Avanzar(1), cuadrado))) == 4)
+  }
+
+  test("profundidad: repeticiones anidadas suman un nivel cada una") {
+    assert(profundidad(Repetir(2, Repetir(3, Avanzar(1)))) == 3)
+  }
+
+  test("profundidad: repetir la secuencia vacía tiene profundidad 2") {
+    assert(profundidad(Repetir(3, Secuencia(Nil))) == 2)
+  }
+
+  test("profundidad: la rama más honda puede estar al final de la secuencia") {
+    val o = Secuencia(List(Avanzar(1), Girar(Izquierda), Repetir(2, Avanzar(1))))
+    assert(profundidad(o) == 3)
+  }
+
+  test("profundidad: el número de veces no cambia la profundidad") {
+    assert(profundidad(Repetir(1000, cuadrado)) == 4)
+    assert(profundidad(Repetir(-3, cuadrado)) == 4)
+  }
+
+  test("profundidad: secuencias anidadas de una sola orden") {
+    val o = Secuencia(List(Secuencia(List(Secuencia(List(Avanzar(1)))))))
+    assert(profundidad(o) == 4)
   }
 
   // Punto 4 -------------------------------------------------------------------
