@@ -392,6 +392,28 @@ println(robot.ejecutar(robot.inicial, orden))
 //Estado(2, 2, Sur)
 ```
 
+### Traza sobre el cuadrado
+
+Ahora se ejecuta `Repetir(4, Secuencia(List(Avanzar(1), Girar(Derecha))))` desde el estado inicial 
+`(0, 0, Norte)`.
+
+
+| Paso | Orden que se ejecuta      | Estado después | Orden que queda por ejecutar |
+|---   |------------------|----------------|---------------------------------------|
+| 0    | Inicio           | (0, 0, Norte)  |  Repetir(4,...)                       |
+| 1    | `Avanzar(1)`     | (0, 1, Norte)  | `Girar(Derecha)` y 3 repeticiones más |
+| 2    | `Girar(Derecha)` | (0, 1, Este)   | 3 repeticiones                        |
+| 3    |  `Avanzar(1)`    | (1, 1, Este)   | `Girar(Derecha)` y 2 repeticiones más |
+| 4    | `Girar(Derecha)` | (1, 1, Sur)    | 2 repeticiones                        |
+| 5    | `Avanzar(1)`     | (1, 0, Sur)    | `Girar(Derecha)` y 1 repetición más   |
+| 6    |  `Girar(Derecha)`| (1, 0, Oeste)  | 1 repetición                          |
+| 7    | `Avanzar(1)`     | (0, 0, Oeste)  | `Girar(Derecha)`                      |
+| 8    | `Girar(Derecha)`  | (0, 0, Norte)  | nada                                 |
+
+Cuando ya no falta nada, `repetir(0, Estado(0, 0, Norte))` devuelve el estado final. Las llamadas de `repetir` fueron
+`repetir(4,...)`, `repetir(3,...)`, `repetir(2,...)`, `repetir(1,...)` y por último `repetir(0,...)`.
+El robot recorre un cuadrado de lado 1 y termina en el origen `(0, 0)`, mirando al Norte, igual que al empezar.
+
 ## Diagrama de llamados recursivos
 
 El siguiente diagrama representa el orden lógico de las llamadas al ejecutar 2 veces la secuencia de avanzar y girar
@@ -1352,9 +1374,9 @@ Girar(sentido)
 case Repetir(veces, _) if veces <= 0 =>
   Secuencia(Nil)
 ```
-Repetir cero o menos veces no hace nada.  Regla 1 del enunciado `Repetir(0,_)`, pero el código trata todos los casos
-con `veces <= 0`, porque `ejecutar` también deja igual al robot con repeticiones negativas. La guarda va antes que el
-caso general, para que atrape primero estas repeticiones.
+La regla 1 del enunciado establece que `Repetir(0, _)` no modifica el estado del robot. En el código, esta condición se amplía a
+`veces <= 0` para contemplar también las repeticiones negativas, ya que `ejecutar` deja al robot en el mismo estado en ambos casos.
+La guarda se ubica antes del caso general para dar prioridad a esta condición.
 
 ```Scala
 case Repetir(veces, orden) if veces == 1 =>
@@ -1566,11 +1588,12 @@ Las dos órdenes terminan en `(0, 5, Este)`.
 
 ```Scala
 val resultado = simplificar(
-Secuencia(List(Avanzar(1), Avanzar(2), Girar(Derecha), Avanzar(3)))
+Secuencia(List(Avanzar(4), Girar(Izquierda),  Avanzar(0),  Avanzar(5), Avanzar(2)))
 )
-println(resultado)  // Secuencia(List(Avanzar(3), Girar(Derecha), Avanzar(3)))
+println(resultado)  // Secuencia(List(Avanzar(4), Girar(Izquierda), Avanzar(7)))
 ```
-Los dos primeros avances se juntan; el último queda aparte porque hay un giro en medio.
+El `Avanzar(0)` se descarta, así que  `Avanzar(5)` y `Avanzar(2)` quedan juntos y se suman en `Avanzar(7)`.
+El `Avanzar(4)` queda aparte porque hay un giro en medio.
 
 ## Ejemplo con `Repetir`
 
