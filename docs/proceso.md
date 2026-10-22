@@ -660,7 +660,54 @@ En este punto se desarrollan cuatro funciones que permiten construir, aplicar y 
 - $transformar$: Modifica las órdenes básicas mediante una función $f$ sin cambiar la forma en que están organizadas
   las órdenes compuestas
   Las listas se procesan mediante reconocimientos de patrones y recursión
-  
+
+## Algoritmo 
+
+El codigo que se uso para desarrollar la actividad es:
+
+```Scala
+/** La secuencia de las dos órdenes. */
+  def componer(o1: Orden, o2: Orden): Orden =
+    Secuencia(List(o1, o2))
+
+  /** Currificada: fijados los pasos y el giro, queda una función de las veces. */
+  def rutina(pasos: Int)(giro: Sentido)(veces: Int): Orden =
+    Repetir(veces, componer(Avanzar(pasos), Girar(giro)))
+
+  /** La misma orden ejecutada sobre cada uno de los estados. */
+  def aplicarA(estados: List[Estado], o: Orden): List[Estado] =
+    estados match {
+      case Nil =>
+        Nil
+      case cabeza :: cola =>
+        ejecutar(cabeza, o) :: aplicarA(cola, o)
+    }
+
+  /** Reemplaza cada orden básica por f(orden), respetando la estructura de las compuestas. */
+  def transformar(o: Orden, f: Orden => Orden): Orden =
+    o match {
+      case Avanzar(_) =>
+        f(o)
+      case Girar(_) =>
+        f(o)
+      case Repetir(veces, orden ) =>
+        Repetir(veces, transformar(orden, f))
+
+      case Secuencia(ordenes) =>
+        def transformarLista(pendientes: List[Orden]): List[Orden] =
+
+          pendientes match {
+            case Nil =>
+              Nil
+
+            case cabeza :: cola =>
+              transformar(cabeza,f) :: transformarLista(cola)
+
+          }
+        Secuencia(transformarLista(ordenes))
+    }
+```
+
 ## Explicación paso a paso
 
 ### Caso 1: Función $componer$
