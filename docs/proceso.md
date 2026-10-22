@@ -663,7 +663,7 @@ En este punto se desarrollan cuatro funciones que permiten construir, aplicar y 
 
 ## Algoritmo 
 
-El codigo que se uso para desarrollar la actividad es:
+El código que se uso para desarrollar la actividad es:
 
 ```Scala
 /** La secuencia de las dos órdenes. */
@@ -712,7 +712,7 @@ El codigo que se uso para desarrollar la actividad es:
 
 ### Caso 1: Función $componer$
 
-Recibe 2 órdenes y devuelve una $Secuencia$ que contiene ambas instrucciones,para que posteriormente $Secuencia$
+Recibe 2 órdenes y devuelve una `Secuencia` que contiene ambas instrucciones,para que posteriormente $Secuencia$
 agrupa esa lista en un orden compuesto
 ```Scala
 def componer(o1: Orden, o2: Orden): Orden =
@@ -725,13 +725,13 @@ Ejemplo:
 ```Scala
 componer(Girar(Derecha), Avanzar(3))
 ```
-Primero se recibe Girar(Derecha) y después Avanzar(3), luego se construye la función:
+Primero se recibe Girar(Derecha) y después Avanzar(3), luego se construye la orden:
 
 ```Scala
 Secuencia(List(Girar(Derecha), Avanzar(3)))
 ```
-Cuando está en orden se usa $ejecutar$, el robot realiza primero el giro y luego el avance.
-Si este comienza en $Estado(0, 0, Norte)$, el recorrido es:
+Cuando está en orden se usa `ejecutar`, el robot realiza primero el giro y luego el avance.
+Si este comienza en `Estado(0, 0, Norte)`, el recorrido es:
 
 | Paso    | Instrucción      | Estado obtenido |
 | ------- | ---------------- | --------------- |
@@ -742,7 +742,7 @@ Si este comienza en $Estado(0, 0, Norte)$, el recorrido es:
 Siendo el resultado Estado(3, 0, Este). Permitiendo observar que el orden de las instrucciones es importante porque
 avanzar antes de girar produciría una posición diferente.
 
-También se puede componer una secuencia vacía con otro orden:
+También se puede componer una secuencia vacía con otra orden:
 ```Scala
 componer(Secuencia(Nil), Avanzar(4))
 ```
@@ -900,7 +900,7 @@ El robot vuelve al estado inicial después de recorrer los 4 lados del cuadrado
 ```
 ----
 * La función `aplicarA` recibe una lista de estados y orden `o`, y devuelve una lista con el estado que resulta de  
-ejecutar `o` sobre cada uno, en el mismo orden. Para ejecutar usa `ejecutar` del punto 2. Una lista vacía o tienen cabeza
+ejecutar `o` sobre cada uno, en el mismo orden. Para ejecutar usa `ejecutar` del punto 2. Una lista vacía o tienen cabeza y 
 cola, así que `match` tiene dos casos.
 
 ## 1.2 Explicación paso a paso
