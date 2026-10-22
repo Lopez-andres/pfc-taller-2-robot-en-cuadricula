@@ -31,7 +31,56 @@ class RobotCuadricula {
   // Punto 2 -------------------------------------------------------------------
 
   /** El estado que resulta de aplicarle la orden al estado dado. */
-  def ejecutar(e: Estado, o: Orden): Estado = ???
+
+  // Recibe un estado y una orden, y devuelve el nuevo estado
+  def ejecutar(e: Estado, o: Orden): Estado = o match{
+    // Caso 1: Mueve el robot según la dirección en la que mira
+    case Avanzar(n) =>
+      e.mira match{
+        // Si mira al Norte, aumenta la coordenada y
+        case Norte => e.copy(y = e.y + n)
+        // Si mira al Sur, disminuye la coordenada y
+        case Sur => e.copy(y = e.y - n)
+        // Si mira al Este, aumenta la coordenada x
+        case Este => e.copy(x = e.x + n)
+        // Si mira al Oeste, disminuye la coordenada x
+        case Oeste => e.copy(x = e.x - n)
+      }
+    // Caso 2: Cambia la dirección del robot sin moverlo
+    case Girar(sentido) => e.copy(mira = girar(e.mira,sentido))
+    // Caso 3: Ejecuta la misma orden varias veces
+    case Repetir(veces, orden) =>
+      @annotation.tailrec
+      // Función auxiliar que guarda las repeticiones pendientes
+      // y el estado actualizado después de cada ejecución
+      def repetir(restantes:Int, actual: Estado): Estado = {
+        // Caso base: Si no quedan repeticiones, devuelve el estado actual
+        if(restantes <= 0){
+          actual
+        }
+        // Ejecuta la orden, actualiza el estado y resta una repetición
+        else{
+          repetir(restantes -1, ejecutar(actual, orden))
+        }
+      }
+      // Comienza con las repeticiones indicadas y el estado inicial
+      repetir(veces,e)
+
+    // Caso 4: Ejecuta una lista de órdenes en el orden recibido
+    case Secuencia(orden) =>
+      @annotation.tailrec
+      // Recorre las órdenes pendientes y conserva el estado actualizado
+      def recorre(pendiente: List[Orden],
+                  actual: Estado): Estado = pendiente match {
+        // Separa la primera orden (x) del resto de la lista (xs)
+        case x :: xs => recorre(xs, ejecutar(actual,x))
+        // Caso base: Cuando la lista esta vacía, termina
+        case Nil => actual
+      }
+      // Comienza el recorrido con lalista y el estado inicial
+      recorre(orden,e)
+
+  }
 
   // Punto 3 -------------------------------------------------------------------
 
@@ -63,10 +112,12 @@ class RobotCuadricula {
   // Punto 4 -------------------------------------------------------------------
 
   /** La secuencia de las dos órdenes. */
-  def componer(o1: Orden, o2: Orden): Orden = ???
+  def componer(o1: Orden, o2: Orden): Orden =
+    Secuencia(List(o1, o2))
 
   /** Currificada: fijados los pasos y el giro, queda una función de las veces. */
-  def rutina(pasos: Int)(giro: Sentido)(veces: Int): Orden = ???
+  def rutina(pasos: Int)(giro: Sentido)(veces: Int): Orden =
+    Repetir(veces, componer(Avanzar(pasos), Girar(giro)))
 
   /** La misma orden ejecutada sobre cada uno de los estados. */
   def aplicarA(estados: List[Estado], o: Orden): List[Estado] =

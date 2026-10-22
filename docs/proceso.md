@@ -86,16 +86,365 @@ println(robot.girar(Oeste, Derecha))  // El resultado será: Norte
 
 ## Ejemplos del enunciado
 
-|Entrada | Salida  |
-|-------|---------|
+| Entrada           | Salida  |
+|-------------------|---------|
 | `girar(Norte, D)` | `Este`  |
 | `girar(Norte, I)` | `Oeste` |
 | `girar(Oeste, D)` | `Norte` |
-| `girar(Sur, I)` | `Este`  |
+| `girar(Sur, I)`   | `Este`  |
 
 ## Conclusión
 `girar` devuelve la dirección que queda tras un giro de 90 grados. Se hace uso de `match` sobre 
 la pareja `(d,s)`, con un `case` por cada una de las 8 combinaciones.
+
+# Punto 2. Ejecutar
+
+## Definición del algoritmo
+
+La función ejecutar recibe el estado actual del robot y una orden, y devuelve el estado resultante después de 
+realizarla. Este tiene una posición (x, y) y una dirección hacia la que mira.
+
+Dependiendo de la orden, puede avanzar, girar y repetir una instrucción o ejecutar una lista de instrucciones.
+
+```Scala
+def ejecutar(e: Estado, o: Orden): Estado = o match {
+
+  case Avanzar(n) =>
+    e.mira match {
+      case Norte => e.copy(y = e.y + n)
+      case Sur   => e.copy(y = e.y - n)
+      case Este  => e.copy(x = e.x + n)
+      case Oeste => e.copy(x = e.x - n)
+    }
+
+  case Girar(sentido) =>
+    e.copy(mira = girar(e.mira, sentido))
+
+  case Repetir(veces, orden) =>
+    @annotation.tailrec
+    def repetir(restantes: Int, actual: Estado): Estado =
+      if (restantes <= 0) {
+        actual
+      } else {
+        repetir(restantes - 1, ejecutar(actual, orden))
+      }
+
+    repetir(veces, e)
+
+  case Secuencia(ordenes) =>
+    @annotation.tailrec
+    def recorre(
+        pendientes: List[Orden],
+        actual: Estado
+    ): Estado =
+      pendientes match {
+        case Nil =>
+          actual
+
+        case x :: xs =>
+          recorre(xs, ejecutar(actual, x))
+      }
+
+    recorre(ordenes, e)
+}
+```
+La función usa $match$ para reconocer los 4 tipos de órdenes. Las 2 primeras se ejecutan directamente, mientras que 
+$Repetir$ y $Secuencia$ necesitan funciones auxiliares recursivas.
+
+Se usa $e.copy$ para construir el nuevo estado con los cambios correspondientes, conservando los atributos 
+que no necesitan modificarse
+
+El algoritmo no emplea var, while ni return. El estado actualizado se transmite mediante los 
+parámetros de las funciones
+
+## Explicación paso a paso
+
+### Caso 1: Avanzar(n)
+
+Cuando el robot recibe $Avanzar(n)$, primero se identifica la dirección hacia la que está mirando mediante 
+$e.mira$ y $match$
+
+| Dirección | Operación realizada | Coordenada modificada |
+|-----------|---------------------|-----------------------|
+| `Norte`   | $y+n$               | $y$                   |
+| `Sur`     | $y-n$               | $y$                   |
+| `Este`    | $x+n$               | $x$                   |
+| `Oeste`   | $x-n$               | $x$                   |
+
+Ejemplo:
+```Scala
+  ejecutar(Estado(2, 3, Norte), Avanzar(4))
+```
+El robot comienza en (2, 3) mirando al norte. Como debe de avanzar 4 unidades, se suma 4 a la coordenada $y$
+$y = 3 + 4 = 7$
+
+Dando como resultado: 
+```Scala
+  Estado(2, 7, Norte)
+```
+Si $n$ es negativo, el robot retrocede sin cambiar la dirección
+
+Ejemplo
+```Scala
+  ejecutar(Estado(5, -1, Oeste), Avanzar(-3))
+```
+Como mira hacia el $Oeste$, el programa realiza:
+$x = 5 - (-3)$
+$x = 8$
+
+El estado resultante es Estado(8, -1, Oeste)
+
+### Caso 2: Girar(sentido)
+
+Cuando se recibe una orden $Girar$, el programa usa la función $girar$ desarrollada en el punto 1
+
+```Scala
+  case Girar(sentido) =>
+    e.copy(mira = girar(e.mira, sentido))
+```
+Esta calcula la nueva dirección, mientras que $copy$ mantiene las coordenadas anteriores
+
+Ejemplo:
+```Scala
+  ejecutar(Estado(4, 7, Este), Girar(Izquierda))
+```
+Dando como resultado: $Estado(4, 7, Norte)$
+
+El robot está mirando al $Este$. Al girar a la izquierda, comienza a mirar al $Norte$ 
+
+### Caso 3: Repetir(veces, orden)
+
+Este permite ejecutar varias veces una misma instrucción.
+Como se necesita recordar cuantas repeticiones falta y cual es su estado actual, se usa la función auxiliar $repetir$
+
+```Scala
+  @annotation.tailrec
+  def repetir(restantes: Int, actual: Estado): Estado =
+    if (restantes <= 0) {
+        actual
+  } else {
+    repetir(restantes - 1, ejecutar(actual, orden))
+  }
+```
+Se sabe que la función tiene los siguientes parámetros:
+- $restantes$: Índica cuantas repeticiones quedan pendientes
+- $actual$: Guarda el estado obtenido después de ejecutar las instrucciones anteriores
+
+Entonces:
+- Si $restantes$ es 0 o negativo, devuelve el estado actual, sin hacer ningún cambio u operación adicional.
+- Si no entonces primero se ejecuta la orden y después llama nuevamente a $repetir$ con una repetición menos
+
+La llamada $repetir(veces, e)$ inicia el proceso con la cantidad de repeticiones solicitadas y el estado 
+recibido por $ejecutar$
+
+Ejemplo:
+```Scala
+  val estado = Estado(1, 2, Este)
+  val orden = Repetir(3, Avanzar(2))
+```
+
+| Repetición | Estado obtenido | Pendientes |
+|------------|-----------------|------------|
+| Inicial    | (1, 2, Este)    | 3          |
+| Primera    | (3, 2, Este)    | 2          |
+| Segunda    | (5, 2, Este)    | 1          |
+| Tercera    | (7, 2, Este)    | 0          |
+
+Cuando $restantes$ llega a 0, devuelve Estado(7, 2, Este)
+
+### Caso 4: Secuencia(ordenes)
+
+Se sabe que una secuencia permite ejecutar varias instrucciones en el orden que aparezcan en una lista,
+para recorrer las se usa la función auxiliar $recorre$
+
+```Scala
+@annotation.tailrec
+def recorre(
+    pendientes: List[Orden],
+    actual: Estado
+): Estado =
+  pendientes match {
+    case Nil =>
+      actual
+
+    case x :: xs =>
+      recorre(xs, ejecutar(actual, x))
+  }
+```
+Como tal recibe la lista de instrucciones pendientes y el estado actual, para luego usar 2 patrones:
+- $Nil$: Indica si la lista está vacía. En este caso se devuelve el estado actual
+- $x :: xs$: Separa la cabeza $x$ (contiene la primera orden), de la cola xs (contiene las instrucciones restantes)
+
+Cuando aparece $x :: xs$, primero se ejecuta $x$ sobre el estado actual; 
+Luego llama a $recorre(xs, ejecutar(actual, x))$, utilizando la lista restante y el nuevo estado obtenido. 
+
+Con esto se inicia el recorrido de la lista completa desde el estado original
+
+Ejemplo:
+
+```Scala
+val estado = Estado(2, 3, Norte)
+val orden = Secuencia(List(Avanzar(2), Girar(Derecha)))
+```
+
+| Paso    | Instrucción      | Estado obtenido | Pendientes |
+|---------|------------------|-----------------|------------|
+| Inicial | —                | (2, 3, Norte)   | 2          |
+| Primera | `Avanzar(2)`     | (2, 5, Norte)   | 1          |
+| Segunda | `Girar(Derecha)` | (2, 5, Este)    | 0          |
+
+Al llegar a $Nil$, la función devuelve Estado(2, 5, Este)
+
+## Seguimiento de las llamadas recursivas
+
+Para observar como trabajan juntas $Repetir$ y $Secuencia$, utilizamos una orden que contiene ambas estructuras 
+
+```Scala
+val orden = Repetir(2, Secuencia(List(Avanzar(2), Girar(Derecha))))
+ejecutar(inicial, orden)
+```
+Siendo el estado inicial Estado(0, 0, Norte)
+
+#### Paso 1: Llamada inicial
+
+La función reconoce que la orden es $Repetir$ e inicia su auxiliar
+
+```Scala
+repetir(2, Estado(0, 0, Norte))
+```
+Como quedan 2 repeticiones, entonces ejecuta la secuencia interna
+
+
+#### Paso 2: Primera repetición
+
+La secuencia contiene 2 órdenes
+
+```Scala
+List(Avanzar(2), Girar(Derecha))
+```
+Entonces:
+```Scala
+// Primero ejecuta Avanzar(2)
+Estado(0, 0, Norte)
+// Se convierte en
+Estado(0, 2, Norte)
+// Despues ejecuta $Girar(Derecha)$
+Estado(0, 2, Este)
+```
+Entonces cuando llega a $Nil$, $recorre$ devuelve ese estado y la función 
+$repetir$ continua con una repetición menos
+
+```Scala
+repetir(1, Estado(0, 2, Este))
+```
+
+#### Paso 3: Segunda repetición
+Nuevamente, se ejecuta la misma secuencia, sin embargo, ahora comienza mirando al $Este$ 
+
+```Scala
+// Primero avanza 2 unidades
+Estado(2, 2, Este)
+// Después gira a la derecha
+Estado(2, 2, Sur)
+```
+Al completar la secuencia, se hace la siguiente llamada 
+
+```Scala
+repetir(0, Estado(2, 2, Sur))
+```
+
+#### Paso 4: Caso base y resultado
+Como $restantes$ es 0, la condición
+
+```Scala
+if (restantes <= 0)
+```
+Se cumple, entonces se devuelve el estado actual $Estado(2, 2, Sur)$
+
+De esta forma $Repetir$ controla las veces que se ejecuta la instrucción 
+y $Secuencia$ controla el orden de las operaciones internas
+
+## Comprobación del resultado
+
+### Traza de posiciones del robot
+
+Para corroborar el ejemplo anterior se muestra cada movimiento y giro realizado desde el estado inicial
+
+| Paso | Orden ejecutada  | Estado del robot |
+|------|------------------|------------------|
+| 0    | Inicio           | (0, 0, Norte)    |
+| 1    | `Avanzar(2)`     | (0, 2, Norte)    |
+| 2    | `Girar(Derecha)` | (0, 2, Este)     |
+| 3    | `Avanzar(2)`     | (2, 2, Este)     |
+| 4    | `Girar(Derecha)` | (2, 2, Sur)      |
+
+Evidenciándose que termina en (2, 2) mirando hacia el $Sur$.
+
+Las 2 repeticiones ejecutaron exactamente la misma lista de órdenes, los movimientos dieron resultados distintos 
+porque la dirección se cambió al finalizar la primera repetición
+
+Ejemplo de uso:
+
+```Scala
+val robot = new RobotCuadricula
+val orden = Repetir(2, Secuencia(List(Avanzar(2), Girar(Derecha))))
+
+println(robot.ejecutar(robot.inicial, orden))
+//Estado(2, 2, Sur)
+```
+
+## Diagrama de llamados recursivos
+
+El siguiente diagrama representa el orden lógico de las llamadas al ejecutar 2 veces la secuencia de avanzar y girar
+
+```mermaid
+flowchart TD
+    A["ejecutar(inicial, orden)"] --> B["repetir(2, Estado(0,0,Norte))"]
+    B --> C["recorre la secuencia: primera repetición"]
+    C --> D["Avanzar(2): Estado(0,2,Norte)"]
+    D --> E["Girar(Derecha): Estado(0,2,Este)"]
+    E --> F["recorre llega a Nil"]
+    F --> G["repetir(1, Estado(0,2,Este))"]
+    G --> H["recorre la secuencia: segunda repetición"]
+    H --> I["Avanzar(2): Estado(2,2,Este)"]
+    I --> J["Girar(Derecha): Estado(2,2,Sur)"]
+    J --> K["recorre llega a Nil"]
+    K --> L["repetir(0, Estado(2,2,Sur))"]
+    L --> M["Caso base: devuelve Estado(2,2,Sur)"]
+```
+Se sabe que $repetir$ y $recorre$ usa recursión de cola (la llamada recursiva es la última 
+que se ejecuta en cada rama). La anotación $@annotation.tailrec$ permite que Scala compruebe esta propiedad 
+
+El diagrama representa el recorrido de las llamadas, esto no significa que todas las llamadas de las funciones 
+auxiliares deban guardarse en la memoria del computador
+
+Las órdenes internas pueden contener otras órdenes compuestas, por lo que $ejecutar$ puede volverl a 
+llamarse para procesarlas
+
+## Terminación
+En $Repetir$, el número de repeticiones disminuye en cada llamada: $2 \Rightarrow 1 \Rightarrow 0$, 
+y que cuando llega a 0 devuelve el estado actual. Si la cantidad inicial es cero o negativa, termina inmediatamente 
+
+En $Secuencia$, la lista de ordenes pendientes se reduce al procesar su cabeza
+
+```Scala
+List(Avanzar(2), Girar(Derecha))
+List(Girar(Derecha))
+Nil
+```
+Y que cuando llega a $Nil$, devuelve el último resultado obtenido. 
+
+Como las ordenes y sus listas internas son finitas y cada contador positivo disminuye, 
+la ejecución termina después de completar las instrucciones.
+
+## Conclusión
+La función $ejecutar$ permite realizar 4 tipos de órdenes al robot: $Avanzar$ que modifica la posición 
+según la dirección y $Girar$ cambia únicamente su orientación. $Repetir$ controla las veces que se ejecuta la orden, 
+mientras que $Secuencia$ recorre las instrucciones usando $Nil$ y $x :: xs$
+
+Cada operación genera un nuevo estado sin modificar el original. Gracias al reconocimiento de patrones y la recursión, 
+el robot puede ejecutar órdenes básicas y compuestas sin utilizar variables mutables ni ciclos.
+
 
 # Punto 3. `cuantasBasicas` y `profundidad`
 
@@ -296,6 +645,344 @@ de retorno, así que se asume que el resultado cabe en un `Int`.
 
 `cuantasBasicas` cuenta las órdenes básicas que se ejecutarían, multiplicando por las repeticiones, y `profundidad` mide los niveles de anidamiento
 sin usar `veces`. Ambas recorren el tipo `Orden` con `match` y la lista de `Secuencia` con `Nil` y `x :: xs`.
+
+
+# Punto 4
+
+## Definición del algoritmo
+
+En este punto se desarrollan cuatro funciones que permiten construir, aplicar y transformar las órdenes de robot:
+- $componer$: Agrupa 2 órdenes dentro de una secuencia, conservando el orden que recibe
+- $rutina$: Construye una orden que permite avanzar, girar y repetir ambas instrucciones una cantidad
+  determinada de veces
+- $aplicarA$: Ejecuta una misma orden sobre cada estado de una lista y devuelve una lista con los resultados
+- $transformar$: Modifica las órdenes básicas mediante una función $f$ sin cambiar la forma en que están organizadas
+  las órdenes compuestas
+  Las listas se procesan mediante reconocimientos de patrones y recursión
+
+El código desarrollado es el siguiente:
+
+```Scala
+def componer(o1: Orden, o2: Orden): Orden =
+  Secuencia(List(o1, o2))
+
+def rutina(pasos: Int)(giro: Sentido)(veces: Int): Orden =
+  Repetir(veces, componer(Avanzar(pasos), Girar(giro)))
+
+def aplicarA(estados: List[Estado], o: Orden): List[Estado] =
+  estados match {
+    case Nil =>
+      Nil
+    case cabeza :: cola =>
+      ejecutar(cabeza, o) :: aplicarA(cola, o)
+  }
+
+def transformar(o: Orden, f: Orden => Orden): Orden =
+  o match {
+    case Avanzar(_) =>
+      f(o)
+
+    case Girar(_) =>
+      f(o)
+
+    case Repetir(veces, orden) =>
+      Repetir(veces, transformar(orden, f))
+
+    case Secuencia(ordenes) =>
+      def transformarLista(pendientes: List[Orden]): List[Orden] =
+        pendientes match {
+          case Nil =>
+            Nil
+          case cabeza :: cola =>
+            transformar(cabeza, f) :: transformarLista(cola)
+        }
+
+      Secuencia(transformarLista(ordenes))
+  }
+```
+
+## Explicación paso a paso
+
+### Caso 1: Función $componer$
+
+Recibe 2 órdenes y devuelve una $Secuencia$ que contiene ambas instrucciones,para que posteriormente $Secuencia$
+agrupa esa lista en un orden compuesto
+```Scala
+def componer(o1: Orden, o2: Orden): Orden =
+  Secuencia(List(o1, o2))
+```
+
+La expresión List(o1, o2) construye la lista que conserva el orden de las instrucciones
+Ejemplo:
+
+```Scala
+componer(Girar(Derecha), Avanzar(3))
+```
+Primero se recibe Girar(Derecha) y después Avanzar(3), luego se construye la función:
+
+```Scala
+Secuencia(List(Girar(Derecha), Avanzar(3)))
+```
+Cuando está en orden se usa $ejecutar$, el robot realiza primero el giro y luego el avance.
+Si este comienza en $Estado(0, 0, Norte)$, el recorrido es:
+
+| Paso    | Instrucción      | Estado obtenido |
+| ------- | ---------------- | --------------- |
+| Inicial | —                | (0, 0, Norte)   |
+| Primera | `Girar(Derecha)` | (0, 0, Este)    |
+| Segunda | `Avanzar(3)`     | (3, 0, Este)    |
+
+Siendo el resultado Estado(3, 0, Este). Permitiendo observar que el orden de las instrucciones es importante porque
+avanzar antes de girar produciría una posición diferente.
+
+También se puede componer una secuencia vacía con otro orden:
+```Scala
+componer(Secuencia(Nil), Avanzar(4))
+```
+Devolviendo
+```Scala
+Secuencia(List(Secuencia(Nil), Avanzar(4)))
+```
+La orden vacía permanece dentro de la secuencia, porque $componer$ solamente agrupa las instrucciones
+y no realiza simplificaciones
+
+### Caso 2: Función $rutina$
+
+Construye una orden compuesta que permite repetir una secuencia de avance y giro
+
+```Scala
+def rutina(pasos: Int)(giro: Sentido)(veces: Int): Orden =
+  Repetir(veces, componer(Avanzar(pasos), Girar(giro)))
+```
+Para construir el orden, el programa utiliza la función $componer$, desarrollada anteriormente
+
+Ejemplo:
+```Scala
+rutina(2)(Derecha)(1)
+```
+
+#### Paso 1: Construcción de las órdenes básicas
+Se usa los valores de $pasos$ y $giro$ para crear:
+```Scala
+Avanzar(2)
+Girar(Derecha)
+```
+
+#### Paso 2: Composición de las órdenes
+
+Las instrucciones se agrupan mediante:
+
+```Scala
+componer(Avanzar(2), Girar(Derecha))
+```
+
+Esto da como resultado
+```Scala
+Secuencia(List(Avanzar(2), Girar(Derecha)))
+```
+
+#### Paso 3: Construcción de la repetición
+Finalmente, el programa usa el parametro $veces$ para contruir:
+
+```Scala
+Repetir(1, Secuencia(List(Avanzar(2), Girar(Derecha))))
+```
+
+Como la cantidad de repeticiones es 1, cuando se ejecute este orden, el robot realizará una avance y un giro
+
+Si parte de Estado(0, 0, Norte), avanzará 2 unidades hacia el norte y después gira a la derecha,
+dando como resultado Estado(0, 2, Este)
+
+#### Currificación
+
+Una característica de $rutina$ es que utiliza 3 parámetros:
+
+```Scala
+rutina(pasos)(giro)(veces)
+```
+
+Permitiendo que se pueda fijar algunos argumentos y obtener una función que recibe los restantes. Ejemplo:
+
+```Scala
+val cuadradoDe = rutina(1)(Derecha) _
+```
+En esta expresión se establece los pasos y el sentido del giro, dejando pendiente únicamente el número de repeticiones,
+luego se puede usar $cuadradoDe(4)$ y a función que se construye es:
+
+```Scala
+Repetir(4, Secuencia(List(Avanzar(1), Girar(Derecha))))
+```
+Este orden permite recorrer los 4 lados de un cuadrado cuando se ejecuta desde el estado inicial.
+Es importante mencionar que $rutina$ solamente construye una instrucción. Los movimientos se realizan después,
+cuando el orden se entrega a $ejecutar$
+
+### Caso 3: Función $aplicarA$
+
+
+
+
+
+
+
+
+
+### Caso 4: Función $transformar$
+
+
+
+
+
+
+
+
+
+
+
+
+## Seguimiento de las llamadas recursivas
+
+### Seguimiento de $aplicarA$
+
+
+
+
+
+
+
+
+### Seguimiento de $transformar$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Comprobación del resultado
+
+### Comprobación del resultado $componer$
+
+Se usa:
+
+```Scala
+ejecutar( inicial, componer(Girar(Derecha), Avanzar(3)))
+```
+
+Desde el Estado(0, 0, Norte), y el robot primero gira a la derecha y después avanza 3 unidades, dando como resultado:
+
+```Scala
+Estado(3, 0, Este)
+```
+Evidenciando mediante el ejemplo que la secuencia respeta el orden de sus instrucciones
+
+### Comprobación del resultado $rutina$
+
+Se ejecuta:
+
+```Scala
+ejecutar(inicial, rutina(1)(Derecha)(4))
+```
+Y el robot realiza 4 avances y 4 giros
+
+| Repetición | Estado después de avanzar | Estado después de girar |
+| ---------- | ------------------------- | ----------------------- |
+| Inicial    | —                         | (0, 0, Norte)           |
+| Primera    | (0, 1, Norte)             | (0, 1, Este)            |
+| Segunda    | (1, 1, Este)              | (1, 1, Sur)             |
+| Tercera    | (1, 0, Sur)               | (1, 0, Oeste)           |
+| Cuarta     | (0, 0, Oeste)             | (0, 0, Norte)           |
+
+Dando como resultado final:
+
+```Scala
+Estado(0, 0, Norte)
+```
+El robot vuelve al estado inicial después de recorrer los 4 lados del cuadrado
+
+### Comprobación del resultado $aplicarA$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### Comprobación del resultado $transformar$
+
+
+
+
+
+
+
+
+
+
+
+## Diagrama de funcionamiento de las funciones
+
+El siguiente diagrama representa el recorrido lógico de las llamadas realizadas por $transformar$ cuando recibe
+una orden compuesta.
+
+```mermaid
+flowchart TD
+    A["Punto 4: Operaciones sobre órdenes"] --> B["componer(o1, o2)"]
+    A --> C["rutina(pasos)(giro)(veces)"]
+    A --> D["aplicarA(estados, o)"]
+    A --> E["transformar(o, f)"]
+
+    B --> B1["Construye List(o1, o2)"]
+    B1 --> B2["Devuelve Secuencia(List(o1, o2))"]
+
+    C --> C1["Crea Avanzar(pasos) y Girar(giro)"]
+    C1 --> C2["Usa componer para agruparlas"]
+    C2 --> C3["Devuelve Repetir(veces, secuencia)"]
+
+    D --> D1{"¿Lista vacía?"}
+    D1 -->|"Sí"| D2["Devuelve Nil"]
+    D1 -->|"No"| D3["Ejecuta la orden sobre la cabeza"]
+    D3 --> D4["Aplica recursión sobre la cola"]
+    D4 --> D5["Construye la lista de estados resultantes"]
+
+    E --> E1{"¿Tipo de orden?"}
+    E1 -->|"Avanzar o Girar"| E2["Aplica f(o)"]
+    E1 -->|"Repetir"| E3["Transforma la orden interna"]
+    E1 -->|"Secuencia"| E4["Transforma cada orden de la lista"]
+    E3 --> E5["Reconstruye Repetir"]
+    E4 --> E6["Reconstruye Secuencia"]
+```
+
+El diagrama muestra como $componer$ y $rutina$ construye órdenes compuestas mientras que en $aplicarA$ recorre una 
+lista de estados y ejecuta el orden de sobre cada uno.
+Por su parte $transformar$ recorre as órdenes compuestas, modifica las instrucciones básicas y reconstruye
+el resultado.
+
+En $aplicarA$ y $transformarLista$ no se usa @annotation.tailrec, porque después de las llamadas recursivas
+todavía necesita el operador $::$ para construir las listas. $transformar$ debe reconstruir las órdenes
+de $Repetir$ y $Secuencia$.
+
+##  Conclusión
+
+Las 4 funciones permiten construir, aplicar y transformar órdenes al robot. 
+$componer$ agrupa instrucciones, $rutina$ permite giros y avances, $aplicarA$ ejecuta una misma orden sobre varios 
+estados y $transformar$ modifica las órdenes básicas
+Todas las funciones trabajan sin modificar los datos originales, usando nuevos valores, recursiones y reconocimiento de
+patrones, sin necesidad de variables mutables ni de ciclos
+
 
 # Punto 5. `simplificar`
 
@@ -532,12 +1219,12 @@ Quedaron dos elementos, por eso se arma una  `Secuencia`.
 ### Traza de posiciones del robot
 Desde `(0, 0, Norte)`:
 
-| Orden original | Estado | Orden simplificada | Estado | 
-|---|---|---|---|
-| `Avanzar(2)` | `(0, 2, Norte)` | | |
-| `Avanzar(3)` | `(0, 5, Norte)` | `Avanzar(5)` | `(0, 5, Norte)` |
-| `Avanzar(0)` | `(0, 5, Norte)` | | |
-| `Girar(D)`   | `(0, 5, Este)` | `Girar(D)` | `(0, 5, Este)` |
+| Orden original | Estado          | Orden simplificada | Estado          | 
+|----------------|-----------------|--------------------|-----------------|
+| `Avanzar(2)`   | `(0, 2, Norte)` |                    |                 |
+| `Avanzar(3)`   | `(0, 5, Norte)` | `Avanzar(5)`       | `(0, 5, Norte)` |
+| `Avanzar(0)`   | `(0, 5, Norte)` |                    |                 |
+| `Girar(D)`     | `(0, 5, Este)`  | `Girar(D)`         | `(0, 5, Este)`  |
 
 Las dos órdenes terminan en `(0, 5, Este)`.
 
@@ -554,13 +1241,13 @@ Los dos primeros avances se juntan; el último queda aparte porque hay un giro e
 
 ## Ejemplos del enunciado
 
-| Entrada | Salida | 
-|---|---|
-| `Secuencia(List(Avanzar(2), Avanzar(3)))` | `Avanzar(5)` | 
-| `Repetir(1, Avanzar(4))` | `Avanzar(4)` |
-| `Secuencia(List(Avanzar(0), Girar(Derecha)))` | `Girar(Derecha)` | 
-| `Secuencia(List(Avanzar(1), Avanzar(2), Girar(Derecha), Avanzar(3)))`  | `Secuencia(List(Avanzar(3), Girar(Derecha), Avanzar(3)))` |
-| `Repetir(0, Avanzar(9))` | `Secuencia(Nil)` |
+| Entrada                                                               | Salida                                                    | 
+|-----------------------------------------------------------------------|-----------------------------------------------------------|
+| `Secuencia(List(Avanzar(2), Avanzar(3)))`                             | `Avanzar(5)`                                              | 
+| `Repetir(1, Avanzar(4))`                                              | `Avanzar(4)`                                              |
+| `Secuencia(List(Avanzar(0), Girar(Derecha)))`                         | `Girar(Derecha)`                                          | 
+| `Secuencia(List(Avanzar(1), Avanzar(2), Girar(Derecha), Avanzar(3)))` | `Secuencia(List(Avanzar(3), Girar(Derecha), Avanzar(3)))` |
+| `Repetir(0, Avanzar(9))`                                              | `Secuencia(Nil)`                                          |
 
 
 ## Diferencia con recursión de cola

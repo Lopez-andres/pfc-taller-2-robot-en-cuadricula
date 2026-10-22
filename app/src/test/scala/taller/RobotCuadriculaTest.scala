@@ -95,6 +95,33 @@ class RobotCuadriculaTest extends AnyFunSuite {
     assert(ejecutar(Estado(5, 5, Oeste), Avanzar(2)) == Estado(3, 5, Oeste))
   }
 
+  // Pruebas nuevas punto 2
+  test("Ejecutar: Retrocede mirando al oeste"){
+    assert(ejecutar(Estado(5, -1, Oeste), Avanzar(-3))
+    == Estado(8, -1, Oeste))
+  }
+
+  test("Ejecutar: Un giro no puede cambiar la posición"){
+    assert(ejecutar(Estado(4, 7, Este), Girar(Izquierda))
+      == Estado(4, 7, Norte))
+  }
+
+  test("Ejecutar: Repetir con un negativo no hace nada"){
+    assert(ejecutar(inicial, Repetir(-3, Girar(Derecha)))
+      == inicial)
+  }
+
+  test("Ejecutar: Repetir 3 avances hacia el este"){
+    val estado = Estado(1, 2, Este)
+    val orden = Repetir(3, Avanzar(2))
+    assert(ejecutar(estado, orden) == Estado(7, 2, Este))
+  }
+
+  test("Ejecutar: Repetir una secuencia dos veces"){
+    val orden = Repetir(2, Secuencia(List(Avanzar(2), Girar(Izquierda))))
+    assert(ejecutar(inicial, orden) == Estado(-2, 2, Sur))
+  }
+
   // Punto 3 -------------------------------------------------------------------
 
   test("cuantasBasicas: una orden básica cuenta uno") {
@@ -218,6 +245,32 @@ class RobotCuadriculaTest extends AnyFunSuite {
 
   test("transformar: con la identidad no cambia nada") {
     assert(transformar(cuadrado, (o: Orden) => o) == cuadrado)
+  }
+
+  // Pruebas nuevas punto 4
+  test("componer: gira antes de avanzar"){
+    assert(ejecutar(inicial, componer(Girar(Derecha), Avanzar(3)))
+        == Estado(3, 0, Este))
+  }
+
+  test("componer: une una orden vacia con un avance"){
+    assert(componer(Secuencia(Nil), Avanzar(4)) ==
+      Secuencia(List(Secuencia(Nil), Avanzar(4))))
+  }
+
+  test("rutina: ejecuta una repeticion"){
+    assert(ejecutar(inicial, rutina(2)(Derecha)(1)) ==
+      Estado(0, 2, Este))
+  }
+
+  test("aplicarA: gira un robot"){
+    assert(aplicarA(List(inicial), Girar(Derecha)) ==
+    List(Estado(0, 0, Este)))
+  }
+
+  test("transformar: cambia un giro"){
+    assert(transformar(Girar(Derecha),
+      _ => Girar(Izquierda)) == Girar(Izquierda))
   }
 
   // Punto 5 -------------------------------------------------------------------
