@@ -1156,8 +1156,8 @@ varias veces, `aplicarA` usa recursión sobre la lista para ejecutar una misma o
 `transformar` emplea recursión estructural para modificar las órdenes básicas, conservando la
 estructura de las compuestas
 
-Por tanto, las 4 funciones cumplen sus especificaciones porque aplicarA y transformar recorren estructuras finitas
-
+Por tanto, las 4 funciones cumplen sus especificaciones: `componer` y `rutina` se justifican mediante demostración directa,
+mientras que `aplicarA` y `transformar` se justifica por inducción, Además, todas terminan, ya que operan sobre estructura finita.
 
 ## Punto 5. `simplificar`
 
@@ -1311,7 +1311,7 @@ Con `Nil` no hace nada.
 * **Caso de inducción,** $r > 0$. La hipótesis es que `repetir(r - 1, e')` $=\mathcal{E}[o]^{r-1}(e')$ para todo $e'$. Entonces  
   `repetir(r, e)` $=$ `repetir(r - 1,` $\mathcal{E}[o]{(e)}$`)` $=\mathcal{E}[o]^{r-1}(\mathcal{E}[o](e)) =\mathcal{E}[o]^{r}(e)$.
 
-**Nota sobre el tamaño de los enteros.** Las coordenadas son `Int` de 32 bits. Con valores normales no hay desbordamiento, si algún valor se pasara
+**Nota sobre el tamaño de los enteros.** Las coordenadas son `Int` de 32 bits. Con valores normales no hay desbordamiento; Si algún valor se pasara
 del máximo, el resultado "daría la vuelta", lo cual equivale a hacer las cuentas módulo $2^{32}$. En esa aritmética la suma sigue siendo
 asociativa y conmutativa, así que las igualdades de este informe valen también en ese caso extremo.
 
@@ -1372,14 +1372,14 @@ Se prueba por inducción bien fundada sobre $\mu$, con la HI sobre las llamadas 
 
 | Caso | Tamaño de la entrada | Tamaño de la salida |
 |---|---|---|
-| `Avanzar(0)` | 1 | 1 (`Secuencia(Nil)`) |
-| `Avanzar(n)`, `Girar(s)` | 1 | 1 |
-| `Repetir(k , o)` con $k \leq 0$ | $1 + t(o)$ | 1 |
+| `Avanzar(0)` | $1$ | $1$ (`Secuencia(Nil)`) |
+| `Avanzar(n)`, `Girar(s)` | $1$ | $1$ |
+| `Repetir(k, o)` con $k \leq 0$ | $1 + t(o)$ | $1$ |
 | `Repetir(1, o)` | $1 + t(o)$ | $t(\texttt{simplificar}(o)) \leq t(o)$ (hipótesis) |
-| `Repetir(k, o)`, $k \geq 2$ | $1 + t(o)$ | 1 , o $1 + t(\texttt{simplificar}(o)) \leq 1 + t(o)$ (hipótesis) |
+| `Repetir(k, o)`, $k \geq 2$ | $1 + t(o)$ | $1$ si el resultado es `Secuencia(Nil)`; si no, $1 + t(\texttt{simplificar}(o)) \leq 1 + t(o)$ (hipótesis) |
 | Lista, `cabezaSimplificada` es `Secuencia(Nil)` | $t(\text{cabeza}) + T(\text{cola})$ | $T(\text{colaSimplificada}) \leq T(\text{cola})$ (hipótesis)|
 | Lista, `cabezaSimplificada` no se junta | $t(\text{cabeza}) + T(\text{cola})$ | $t(\text{cabezaSimplificada}) + T(\text{colaSimplificada}) \leq t(\text{cabeza}) + T(\text{cola})$ (hipótesis) |
-| `Secuencia(ps)`, resultado vacío, de un elemento $p$, o varias | $1 + T(ps)$ | 1, o $t(p) \leq T(\text{listaSimplificada}) \leq T(ps)$, o $1 + T(\text{listaSimplificada}) \leq 1 + T(ps)$ (hipótesis) | 
+| `Secuencia(ps)` | $1 + T(ps)$ | $1$ si el resultado es vacío;  $t(p) \leq T(\text{listaSimplificada}) \leq T(ps)$, si es un solo elemento $p$;  $1 + T(\text{listaSimplificada}) \leq 1 + T(ps)$  si son varios (hipótesis) | 
 
 **Caso de juntar avances.** Sea `cabezaSimplificada`$= \texttt{Avanzar}(n)$ y `colaSimplificada` $=\texttt{Avanzar}(m) :: \text{siguiente}$.
 La lista que se pasa a la nueva llamada es $\texttt{Avanzar}(n + m) :: \text{siguiente}$, y su tamaño es:
