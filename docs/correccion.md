@@ -13,10 +13,6 @@ $$
 \forall a \in A : P_f(a) == f(a)
 $$
 
-Como $A$ está definido recursivamente, la demostración usa inducción: se prueba cada valor básico de $A$ y,
-para cada valor construido a partir de otros, se supone la hipótesis de inducción (HI), es decir, que
-$P_f$ es correcto sobre esos otros valores.
-
 1. **Caso base:** se prueba la igualdad para cada valor básico de $A$.
 2. **Casos de inducción** para cada valor construido a partir de otros se supone la hipótesis de inducción (HI), es decir, que $P_f$ es correcto sobre esos otros valores, y se prueba la igualdad.
 
@@ -885,7 +881,7 @@ Sea $L= \text{List}(o_1, \ldots, o_n)$ tal que $P_{\mathrm{tra}}(o_i, g) == T_g(
 Entonces:
 
 $$ 
-\texttt{transformarLista}(L) == \text{List}(T_g(o_1,\ \ldots,\ T_g(o_n))
+\texttt{transformarLista}(L) == \text{List}(T_g(o_1),\ \ldots,\ T_g(o_n))
 $$
 
 Se prueba con inducción sobre $n$.
@@ -904,7 +900,7 @@ Concluimos por inducción que el lema vale.
 
 **Caso base:**  `Avanzar(n)` y `Girar(s)`: el programa devuelve `f(o)`, que es $T_g(o)$.
 
-**Caso `Repetir(k, o')`:** por la Hipótesis, $P_{\mathrm{tra}}(o', g) == T_g(o')$, así que $/texttt{Repetir}(k, P_{\mathrm{trat}}
+**Caso `Repetir(k, o')`:** por la Hipótesis, $P_{\mathrm{tra}}(o', g) == T_g(o')$, así que $\texttt{Repetir}(k, P_{\mathrm{trat}}
 (o', g)) = \texttt{Repetir}(k, T_g(o')) = T_g(\texttt{Repetir}(k, o'))$.
 
 **Caso `Secuencia`:** por la HI cada $o_i$ cumple la suposición del lema, así que `transformarLista` da $\text{List}(T_g(o_1), 
@@ -1297,7 +1293,7 @@ con parámetros `d` y `s`. En la ecuación de arriba se llama con la dirección 
 el sentido de la orden `Girar(s)`, igual que hace el código de `ejecutar`: `Estado (e.x, e.y, girar(e.mira, sentido))`.
 
 $$
-\mathcal{E}[\texttt{Repetir}(k, o)]= \mathcal{E}[o]^{k}
+\mathcal{E}[\texttt{Repetir}(k, o)] = \mathcal{E}[o]^{k}
 $$
 
 $$
